@@ -84,11 +84,13 @@ class RestaurantCoordinationAgent:
             prep_elapsed_min = max(0.0, (now_dt - prep_started_at).total_seconds() / 60.0)
             prep_delay_min = max(0.0, prep_elapsed_min - estimated_prep_total)
 
-        # 3. Simulated Kitchen Backlog
+        # 3. Simulated Kitchen Backlog & Telemetry Events
         # Explicit distinction: mark as SIMULATED_TELEMETRY (historical orders do not have KDS data)
         simulated_backlog = 3
         for ev in events:
             meta = ev.get("metadata", {}) or ev.get("event_metadata", {}) or {}
+            if "prep_delay_min" in meta and meta["prep_delay_min"] is not None:
+                prep_delay_min = max(prep_delay_min, float(meta["prep_delay_min"]))
             if "kitchen_queue_depth" in meta:
                 simulated_backlog = int(meta["kitchen_queue_depth"])
                 break

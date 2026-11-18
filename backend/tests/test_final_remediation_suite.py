@@ -28,7 +28,8 @@ from backend.app.core.auth import (
     verify_access_token,
     TokenData,
 )
-from backend.app.database.session import SessionLocal
+from backend.app.database.session import SessionLocal, engine
+from backend.app.database.base import Base
 from backend.app.models.audit import RecoveryExecutionAudit
 from backend.app.models.order import Order
 from backend.app.models.investigation import OrderInvestigation
@@ -41,6 +42,13 @@ from backend.app.simulation.strategies.implementations import (
     MultiAgentRecoveryStrategy,
 )
 from backend.app.simulation.kpi_calculator import KPICalculator
+
+
+@pytest.fixture(scope="module", autouse=True)
+def setup_suite_database():
+    """Ensure database tables exist on active engine for this test suite."""
+    Base.metadata.create_all(bind=engine)
+    yield
 
 
 @pytest.fixture

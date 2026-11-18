@@ -48,10 +48,22 @@ class CustomerResolutionAgent:
         if synthesis is None:
             synthesis = self._synthesize_deterministic(state)
 
+        # Upgrade nominal risk tier if investigation revealed significant kitchen or dispatch delay
+        final_risk = state.get("risk_tier", RiskTier.NOMINAL)
+        if final_risk == RiskTier.NOMINAL:
+            prep_delay = (state.get("restaurant_investigation") or {}).get("prep_delay_min", 0.0)
+            reassignments = (state.get("delivery_investigation") or {}).get("reassignment_count", 0)
+            allot_delayed = (state.get("delivery_investigation") or {}).get("is_allotment_delayed", False)
+            if prep_delay >= 12.0 or reassignments >= 2:
+                final_risk = RiskTier.HIGH_RISK
+            elif prep_delay > 4.0 or allot_delayed or reassignments >= 1:
+                final_risk = RiskTier.MONITORED
+
         # Update state
         rec_dicts = [r.model_dump() for r in synthesis.recommendations]
         return {
             **state,
+            "risk_tier": final_risk,
             "resolution_synthesis": synthesis.model_dump(),
             "recovery_recommendations": rec_dicts,
             "evidence_and_provenance": {
@@ -80,6 +92,12 @@ class CustomerResolutionAgent:
         first_mile = deliv_inv.get("first_mile_km", 1.8)
         c2_alert_10k = task_c2.get("alert_budget_10_per_1000", False)
         c2_alert_5k = task_c2.get("alert_budget_5_per_1000", False)
+
+        if risk_tier == RiskTier.NOMINAL:
+            if prep_delay >= 12.0 or reassignments >= 2:
+                risk_tier = RiskTier.HIGH_RISK
+            elif prep_delay > 4.0 or allot_delayed or reassignments >= 1:
+                risk_tier = RiskTier.MONITORED
 
         recommendations: List[RecoveryActionRecommendation] = []
         rank_counter = 1

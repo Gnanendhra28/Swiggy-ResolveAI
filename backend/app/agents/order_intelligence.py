@@ -101,18 +101,51 @@ class OrderIntelligenceAgent:
                 eta_delay_min = (projected_p50 - promised_at).total_seconds() / 60.0
                 p90_delay_min = (projected_p90 - promised_at).total_seconds() / 60.0
 
-        # Check reassignments
+        # Check reassignments and operational delay events
         reassignment_count = 0
+        prep_delay_event_min = 0.0
+        allotment_delay_event_min = 0.0
+        has_delivery_stall = False
+
         for ev in events:
-            if ev.get("event_type") in ("RIDER_REASSIGNED", "ORDER_REASSIGNED"):
+            etype = ev.get("event_type", "")
+            meta = ev.get("metadata", {}) or ev.get("event_metadata", {}) or {}
+            if etype in ("RIDER_REASSIGNED", "ORDER_REASSIGNED"):
                 reassignment_count += 1
+            elif etype in ("RESTAURANT_PREPARATION_DELAY", "KITCHEN_DELAY"):
+                prep_delay_event_min = max(prep_delay_event_min, float(meta.get("prep_delay_min", 10.0)))
+            elif etype in ("COURIER_ASSIGNMENT_DELAY", "ALLOTMENT_DELAY"):
+                allotment_delay_event_min = max(allotment_delay_event_min, float(meta.get("allotment_delay_min", 10.0)))
+            elif etype in ("COURIER_ACCEPTANCE_TIMEOUT", "FIRST_MILE_TRANSIT_STALL", "RIDER_STALLED"):
+                has_delivery_stall = True
+                if "reassignment_count" in meta:
+                    reassignment_count = max(reassignment_count, int(meta["reassignment_count"]))
 
         # Apply deterministic rule hierarchy
-        if task_c2.alert_budget_5_per_1000 or reassignment_count >= 2 or eta_delay_min > 20.0:
+        if (
+            task_c2.alert_budget_5_per_1000
+            or reassignment_count >= 2
+            or eta_delay_min > 20.0
+            or (prep_delay_event_min >= 15.0 and allotment_delay_event_min >= 10.0)
+        ):
             risk_tier = RiskTier.CRITICAL
-        elif task_c2.alert_budget_10_per_1000 or eta_delay_min > 10.0 or p90_delay_min > 15.0:
+        elif (
+            task_c2.alert_budget_10_per_1000
+            or eta_delay_min > 10.0
+            or p90_delay_min > 15.0
+            or allotment_delay_event_min >= 10.0
+            or prep_delay_event_min >= 12.0
+        ):
             risk_tier = RiskTier.HIGH_RISK
-        elif eta_delay_min > 0.0 or p90_delay_min > 5.0 or task_a.is_long_tail or reassignment_count == 1:
+        elif (
+            eta_delay_min > 0.0
+            or p90_delay_min > 5.0
+            or task_a.is_long_tail
+            or reassignment_count >= 1
+            or prep_delay_event_min > 0.0
+            or allotment_delay_event_min > 0.0
+            or has_delivery_stall
+        ):
             risk_tier = RiskTier.MONITORED
         else:
             risk_tier = RiskTier.NOMINAL

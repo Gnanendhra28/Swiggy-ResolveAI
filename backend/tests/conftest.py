@@ -7,7 +7,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.pool import StaticPool
 
 from backend.app.database.base import Base
-from backend.app.database.session import get_db
+from backend.app.database.session import get_db, engine
 from backend.app.main import app
 from backend.app.services.simulation_service import SimulationService
 
@@ -25,7 +25,15 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_database():
     Base.metadata.create_all(bind=engine_test)
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception:
+        pass
     yield
+    try:
+        Base.metadata.drop_all(bind=engine)
+    except Exception:
+        pass
     Base.metadata.drop_all(bind=engine_test)
 
 
