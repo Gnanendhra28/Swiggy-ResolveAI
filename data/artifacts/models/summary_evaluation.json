@@ -1,0 +1,629 @@
+{
+  "execution_timestamp": "2026-11-18 11:33:28 UTC",
+  "tasks": {
+    "task_a_delivery_duration": {
+      "task_name": "delivery_duration",
+      "task_type": "REGRESSION",
+      "selected_model": "lightgbm",
+      "target_column": "target_delivery_duration_min",
+      "feature_columns": [
+        "last_mile_distance",
+        "is_zero_last_mile",
+        "last_mile_distance_sq",
+        "distance_bracket",
+        "order_hour",
+        "hour_sin",
+        "hour_cos",
+        "order_dayofweek",
+        "dow_sin",
+        "dow_cos",
+        "is_weekend",
+        "meal_period",
+        "is_peak_meal_window",
+        "rolling_order_volume_15m",
+        "rolling_order_volume_60m",
+        "demand_acceleration"
+      ],
+      "categorical_columns": [
+        "distance_bracket",
+        "meal_period"
+      ],
+      "validation_comparison": {
+        "dummy_median": {
+          "mae": 9.2303,
+          "rmse": 12.9069,
+          "r2": -0.0218,
+          "sample_size": 80184,
+          "absolute_error_percentiles": {
+            "p10": 1.31666666666667,
+            "p25": 3.4333333333333336,
+            "p50_median": 7.266666666666669,
+            "p75": 12.233333333333334,
+            "p90": 18.283333333333335,
+            "p95": 24.38333333333333,
+            "p99": 42.71666666666667
+          },
+          "performance_by_duration_range": {
+            "under_20min": {
+              "count": 13232,
+              "pct_of_total": 16.5,
+              "mae": 12.85,
+              "rmse": 13.14
+            },
+            "20_to_35min": {
+              "count": 42392,
+              "pct_of_total": 52.87,
+              "mae": 3.89,
+              "rmse": 4.63
+            },
+            "35_to_50min": {
+              "count": 18740,
+              "pct_of_total": 23.37,
+              "mae": 11.6,
+              "rmse": 12.31
+            },
+            "over_50min": {
+              "count": 5820,
+              "pct_of_total": 7.26,
+              "mae": 32.28,
+              "rmse": 35.47
+            }
+          }
+        },
+        "ridge_linear": {
+          "mae": 8.9271,
+          "rmse": 12.1603,
+          "r2": 0.093,
+          "sample_size": 80184,
+          "absolute_error_percentiles": {
+            "p10": 1.4146604755187273,
+            "p25": 3.598250492562821,
+            "p50_median": 7.37709980451797,
+            "p75": 12.017059266022512,
+            "p90": 16.878068035601817,
+            "p95": 21.50437212397769,
+            "p99": 39.301088154639466
+          },
+          "performance_by_duration_range": {
+            "under_20min": {
+              "count": 13232,
+              "pct_of_total": 16.5,
+              "mae": 12.3,
+              "rmse": 12.92
+            },
+            "20_to_35min": {
+              "count": 42392,
+              "pct_of_total": 52.87,
+              "mae": 5.57,
+              "rmse": 6.79
+            },
+            "35_to_50min": {
+              "count": 18740,
+              "pct_of_total": 23.37,
+              "mae": 8.22,
+              "rmse": 9.73
+            },
+            "over_50min": {
+              "count": 5820,
+              "pct_of_total": 7.26,
+              "mae": 27.97,
+              "rmse": 31.89
+            }
+          }
+        },
+        "lightgbm": {
+          "mae": 8.7763,
+          "rmse": 12.0892,
+          "r2": 0.1036,
+          "sample_size": 80184,
+          "absolute_error_percentiles": {
+            "p10": 1.3780393846927055,
+            "p25": 3.472347254924472,
+            "p50_median": 7.16181801869174,
+            "p75": 11.714945842040072,
+            "p90": 16.66129116425393,
+            "p95": 21.64955612601963,
+            "p99": 39.83986354611589
+          },
+          "performance_by_duration_range": {
+            "under_20min": {
+              "count": 13232,
+              "pct_of_total": 16.5,
+              "mae": 11.84,
+              "rmse": 12.39
+            },
+            "20_to_35min": {
+              "count": 42392,
+              "pct_of_total": 52.87,
+              "mae": 5.14,
+              "rmse": 6.29
+            },
+            "35_to_50min": {
+              "count": 18740,
+              "pct_of_total": 23.37,
+              "mae": 8.71,
+              "rmse": 10.15
+            },
+            "over_50min": {
+              "count": 5820,
+              "pct_of_total": 7.26,
+              "mae": 28.48,
+              "rmse": 32.32
+            }
+          }
+        }
+      },
+      "test_evaluation": {
+        "mae": 9.385,
+        "rmse": 12.7665,
+        "r2": 0.0908,
+        "sample_size": 53588,
+        "absolute_error_percentiles": {
+          "p10": 1.5008908979039608,
+          "p25": 3.7693047022888937,
+          "p50_median": 7.7826351713396384,
+          "p75": 12.607838863060486,
+          "p90": 17.696800645282842,
+          "p95": 22.546880923034088,
+          "p99": 41.6136249699301
+        },
+        "performance_by_duration_range": {
+          "under_20min": {
+            "count": 8343,
+            "pct_of_total": 15.57,
+            "mae": 13.12,
+            "rmse": 13.67
+          },
+          "20_to_35min": {
+            "count": 27271,
+            "pct_of_total": 50.89,
+            "mae": 5.81,
+            "rmse": 7.05
+          },
+          "35_to_50min": {
+            "count": 13326,
+            "pct_of_total": 24.87,
+            "mae": 7.98,
+            "rmse": 9.45
+          },
+          "over_50min": {
+            "count": 4648,
+            "pct_of_total": 8.67,
+            "mae": 27.7,
+            "rmse": 31.56
+          }
+        }
+      },
+      "split_sample_sizes": {
+        "train": 310521,
+        "validation": 80184,
+        "test": 53588
+      }
+    },
+    "task_b_allocation_delay": {
+      "task_name": "allocation_delay",
+      "task_type": "BINARY_CLASSIFICATION",
+      "selected_model": "lightgbm",
+      "target_column": "target_is_allocation_delayed",
+      "feature_columns": [
+        "last_mile_distance",
+        "is_zero_last_mile",
+        "last_mile_distance_sq",
+        "distance_bracket",
+        "order_hour",
+        "hour_sin",
+        "hour_cos",
+        "order_dayofweek",
+        "dow_sin",
+        "dow_cos",
+        "is_weekend",
+        "meal_period",
+        "is_peak_meal_window",
+        "rolling_order_volume_15m",
+        "rolling_order_volume_60m",
+        "demand_acceleration"
+      ],
+      "categorical_columns": [
+        "distance_bracket",
+        "meal_period"
+      ],
+      "selected_threshold": 0.47000000000000003,
+      "validation_comparison": {
+        "dummy_stratified": {
+          "pr_auc": 0.0579,
+          "roc_auc": 0.5025,
+          "brier_score": 0.1104,
+          "positive_class_prevalence": 0.0576,
+          "threshold": 0.5,
+          "precision": 0.0622,
+          "recall": 0.065,
+          "f1": 0.0636,
+          "confusion_matrix": {
+            "true_negative": 71871,
+            "false_positive": 4584,
+            "false_negative": 4373,
+            "true_positive": 304
+          },
+          "sample_size": 81132
+        },
+        "logistic_regression": {
+          "pr_auc": 0.0675,
+          "roc_auc": 0.5491,
+          "brier_score": 0.23899,
+          "positive_class_prevalence": 0.0576,
+          "threshold": 0.5,
+          "precision": 0.0668,
+          "recall": 0.4221,
+          "f1": 0.1154,
+          "confusion_matrix": {
+            "true_negative": 48884,
+            "false_positive": 27571,
+            "false_negative": 2703,
+            "true_positive": 1974
+          },
+          "sample_size": 81132
+        },
+        "lightgbm": {
+          "pr_auc": 0.0698,
+          "roc_auc": 0.5486,
+          "brier_score": 0.228382,
+          "positive_class_prevalence": 0.0576,
+          "threshold": 0.5,
+          "precision": 0.0719,
+          "recall": 0.285,
+          "f1": 0.1148,
+          "confusion_matrix": {
+            "true_negative": 59244,
+            "false_positive": 17211,
+            "false_negative": 3344,
+            "true_positive": 1333
+          },
+          "sample_size": 81132
+        }
+      },
+      "validation_optimal_threshold_eval": {
+        "pr_auc": 0.0698,
+        "roc_auc": 0.5486,
+        "brier_score": 0.228382,
+        "positive_class_prevalence": 0.0576,
+        "threshold": 0.47,
+        "precision": 0.0638,
+        "recall": 0.6036,
+        "f1": 0.1154,
+        "confusion_matrix": {
+          "true_negative": 35009,
+          "false_positive": 41446,
+          "false_negative": 1854,
+          "true_positive": 2823
+        },
+        "sample_size": 81132
+      },
+      "test_evaluation_default_threshold": {
+        "pr_auc": 0.0728,
+        "roc_auc": 0.5415,
+        "brier_score": 0.238267,
+        "positive_class_prevalence": 0.0617,
+        "threshold": 0.5,
+        "precision": 0.0703,
+        "recall": 0.3711,
+        "f1": 0.1182,
+        "confusion_matrix": {
+          "true_negative": 34455,
+          "false_positive": 16422,
+          "false_negative": 2103,
+          "true_positive": 1241
+        },
+        "sample_size": 54221
+      },
+      "test_evaluation_selected_threshold": {
+        "pr_auc": 0.0728,
+        "roc_auc": 0.5415,
+        "brier_score": 0.238267,
+        "positive_class_prevalence": 0.0617,
+        "threshold": 0.47,
+        "precision": 0.0664,
+        "recall": 0.6259,
+        "f1": 0.1201,
+        "confusion_matrix": {
+          "true_negative": 21469,
+          "false_positive": 29408,
+          "false_negative": 1251,
+          "true_positive": 2093
+        },
+        "sample_size": 54221
+      },
+      "split_sample_sizes": {
+        "train": 314646,
+        "validation": 81132,
+        "test": 54221
+      }
+    },
+    "task_c1_cancellation_upfront": {
+      "task_name": "cancellation_upfront",
+      "task_type": "BINARY_CLASSIFICATION",
+      "selected_model": "lightgbm",
+      "target_column": "target_is_cancelled",
+      "feature_columns": [
+        "last_mile_distance",
+        "is_zero_last_mile",
+        "last_mile_distance_sq",
+        "distance_bracket",
+        "order_hour",
+        "hour_sin",
+        "hour_cos",
+        "order_dayofweek",
+        "dow_sin",
+        "dow_cos",
+        "is_weekend",
+        "meal_period",
+        "is_peak_meal_window",
+        "rolling_order_volume_15m",
+        "rolling_order_volume_60m",
+        "demand_acceleration"
+      ],
+      "categorical_columns": [
+        "distance_bracket",
+        "meal_period"
+      ],
+      "selected_threshold": 0.61,
+      "validation_comparison": {
+        "dummy_stratified": {
+          "pr_auc": 0.011,
+          "roc_auc": 0.4979,
+          "brier_score": 0.022765,
+          "positive_class_prevalence": 0.011,
+          "threshold": 0.5,
+          "precision": 0.0072,
+          "recall": 0.0078,
+          "f1": 0.0075,
+          "confusion_matrix": {
+            "true_negative": 79278,
+            "false_positive": 960,
+            "false_negative": 887,
+            "true_positive": 7
+          },
+          "sample_size": 81132
+        },
+        "logistic_regression": {
+          "pr_auc": 0.0134,
+          "roc_auc": 0.5368,
+          "brier_score": 0.248667,
+          "positive_class_prevalence": 0.011,
+          "threshold": 0.5,
+          "precision": 0.0122,
+          "recall": 0.4866,
+          "f1": 0.0238,
+          "confusion_matrix": {
+            "true_negative": 45029,
+            "false_positive": 35209,
+            "false_negative": 459,
+            "true_positive": 435
+          },
+          "sample_size": 81132
+        },
+        "lightgbm": {
+          "pr_auc": 0.0123,
+          "roc_auc": 0.5229,
+          "brier_score": 0.209159,
+          "positive_class_prevalence": 0.011,
+          "threshold": 0.5,
+          "precision": 0.0126,
+          "recall": 0.3233,
+          "f1": 0.0242,
+          "confusion_matrix": {
+            "true_negative": 57551,
+            "false_positive": 22687,
+            "false_negative": 605,
+            "true_positive": 289
+          },
+          "sample_size": 81132
+        }
+      },
+      "validation_optimal_threshold_eval": {
+        "pr_auc": 0.0123,
+        "roc_auc": 0.5229,
+        "brier_score": 0.209159,
+        "positive_class_prevalence": 0.011,
+        "threshold": 0.61,
+        "precision": 0.0161,
+        "recall": 0.0716,
+        "f1": 0.0263,
+        "confusion_matrix": {
+          "true_negative": 76325,
+          "false_positive": 3913,
+          "false_negative": 830,
+          "true_positive": 64
+        },
+        "sample_size": 81132
+      },
+      "test_evaluation_default_threshold": {
+        "pr_auc": 0.0207,
+        "roc_auc": 0.5546,
+        "brier_score": 0.201493,
+        "positive_class_prevalence": 0.0111,
+        "threshold": 0.5,
+        "precision": 0.0142,
+        "recall": 0.2919,
+        "f1": 0.0272,
+        "confusion_matrix": {
+          "true_negative": 41438,
+          "false_positive": 12180,
+          "false_negative": 427,
+          "true_positive": 176
+        },
+        "sample_size": 54221
+      },
+      "test_evaluation_selected_threshold": {
+        "pr_auc": 0.0207,
+        "roc_auc": 0.5546,
+        "brier_score": 0.201493,
+        "positive_class_prevalence": 0.0111,
+        "threshold": 0.61,
+        "precision": 0.0195,
+        "recall": 0.1095,
+        "f1": 0.033,
+        "confusion_matrix": {
+          "true_negative": 50291,
+          "false_positive": 3327,
+          "false_negative": 537,
+          "true_positive": 66
+        },
+        "sample_size": 54221
+      },
+      "split_sample_sizes": {
+        "train": 314646,
+        "validation": 81132,
+        "test": 54221
+      }
+    },
+    "task_c2_cancellation_landmark": {
+      "task_name": "cancellation_landmark",
+      "task_type": "BINARY_CLASSIFICATION",
+      "selected_model": "lightgbm",
+      "target_column": "target_cancelled_post_landmark",
+      "feature_columns": [
+        "last_mile_distance",
+        "is_zero_last_mile",
+        "last_mile_distance_sq",
+        "distance_bracket",
+        "order_hour",
+        "hour_sin",
+        "hour_cos",
+        "order_dayofweek",
+        "dow_sin",
+        "dow_cos",
+        "is_weekend",
+        "meal_period",
+        "is_peak_meal_window",
+        "rolling_order_volume_15m",
+        "rolling_order_volume_60m",
+        "demand_acceleration",
+        "first_mile_distance",
+        "is_extreme_first_mile",
+        "first_to_last_mile_ratio",
+        "total_route_distance",
+        "courier_session_time_min",
+        "courier_fatigue_flag",
+        "is_delayed_allotment",
+        "allot_delay_min",
+        "has_accepted_by_landmark",
+        "accept_delay_at_landmark"
+      ],
+      "categorical_columns": [
+        "distance_bracket",
+        "meal_period"
+      ],
+      "selected_threshold": 0.87,
+      "validation_comparison": {
+        "dummy_stratified": {
+          "pr_auc": 0.0101,
+          "roc_auc": 0.5013,
+          "brier_score": 0.020698,
+          "positive_class_prevalence": 0.0101,
+          "threshold": 0.5,
+          "precision": 0.0125,
+          "recall": 0.0134,
+          "f1": 0.0129,
+          "confusion_matrix": {
+            "true_negative": 79336,
+            "false_positive": 869,
+            "false_negative": 808,
+            "true_positive": 11
+          },
+          "sample_size": 81024
+        },
+        "logistic_regression": {
+          "pr_auc": 0.0501,
+          "roc_auc": 0.65,
+          "brier_score": 0.218358,
+          "positive_class_prevalence": 0.0101,
+          "threshold": 0.5,
+          "precision": 0.0172,
+          "recall": 0.547,
+          "f1": 0.0334,
+          "confusion_matrix": {
+            "true_negative": 54625,
+            "false_positive": 25580,
+            "false_negative": 371,
+            "true_positive": 448
+          },
+          "sample_size": 81024
+        },
+        "lightgbm": {
+          "pr_auc": 0.056,
+          "roc_auc": 0.6707,
+          "brier_score": 0.162645,
+          "positive_class_prevalence": 0.0101,
+          "threshold": 0.5,
+          "precision": 0.0236,
+          "recall": 0.4383,
+          "f1": 0.0448,
+          "confusion_matrix": {
+            "true_negative": 65355,
+            "false_positive": 14850,
+            "false_negative": 460,
+            "true_positive": 359
+          },
+          "sample_size": 81024
+        }
+      },
+      "validation_optimal_threshold_eval": {
+        "pr_auc": 0.056,
+        "roc_auc": 0.6707,
+        "brier_score": 0.162645,
+        "positive_class_prevalence": 0.0101,
+        "threshold": 0.87,
+        "precision": 0.1663,
+        "recall": 0.1013,
+        "f1": 0.1259,
+        "confusion_matrix": {
+          "true_negative": 79789,
+          "false_positive": 416,
+          "false_negative": 736,
+          "true_positive": 83
+        },
+        "sample_size": 81024
+      },
+      "test_evaluation_default_threshold": {
+        "pr_auc": 0.0742,
+        "roc_auc": 0.6589,
+        "brier_score": 0.155868,
+        "positive_class_prevalence": 0.0101,
+        "threshold": 0.5,
+        "precision": 0.023,
+        "recall": 0.4139,
+        "f1": 0.0435,
+        "confusion_matrix": {
+          "true_negative": 43994,
+          "false_positive": 9610,
+          "false_negative": 320,
+          "true_positive": 226
+        },
+        "sample_size": 54150
+      },
+      "test_evaluation_selected_threshold": {
+        "pr_auc": 0.0742,
+        "roc_auc": 0.6589,
+        "brier_score": 0.155868,
+        "positive_class_prevalence": 0.0101,
+        "threshold": 0.87,
+        "precision": 0.2432,
+        "recall": 0.1154,
+        "f1": 0.1565,
+        "confusion_matrix": {
+          "true_negative": 53408,
+          "false_positive": 196,
+          "false_negative": 483,
+          "true_positive": 63
+        },
+        "sample_size": 54150
+      },
+      "split_sample_sizes": {
+        "train": 314245,
+        "validation": 81024,
+        "test": 54150
+      }
+    }
+  },
+  "total_training_duration_seconds": 33.17
+}

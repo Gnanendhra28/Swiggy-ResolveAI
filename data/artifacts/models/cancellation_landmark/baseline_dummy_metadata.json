@@ -1,0 +1,150 @@
+{
+  "task_name": "cancellation_landmark",
+  "task_type": "BINARY_CLASSIFICATION",
+  "selected_model": "lightgbm",
+  "target_column": "target_cancelled_post_landmark",
+  "feature_columns": [
+    "last_mile_distance",
+    "is_zero_last_mile",
+    "last_mile_distance_sq",
+    "distance_bracket",
+    "order_hour",
+    "hour_sin",
+    "hour_cos",
+    "order_dayofweek",
+    "dow_sin",
+    "dow_cos",
+    "is_weekend",
+    "meal_period",
+    "is_peak_meal_window",
+    "rolling_order_volume_15m",
+    "rolling_order_volume_60m",
+    "demand_acceleration",
+    "first_mile_distance",
+    "is_extreme_first_mile",
+    "first_to_last_mile_ratio",
+    "total_route_distance",
+    "courier_session_time_min",
+    "courier_fatigue_flag",
+    "is_delayed_allotment",
+    "allot_delay_min",
+    "has_accepted_by_landmark",
+    "accept_delay_at_landmark"
+  ],
+  "categorical_columns": [
+    "distance_bracket",
+    "meal_period"
+  ],
+  "selected_threshold": 0.87,
+  "validation_comparison": {
+    "dummy_stratified": {
+      "pr_auc": 0.0101,
+      "roc_auc": 0.5013,
+      "brier_score": 0.020698,
+      "positive_class_prevalence": 0.0101,
+      "threshold": 0.5,
+      "precision": 0.0125,
+      "recall": 0.0134,
+      "f1": 0.0129,
+      "confusion_matrix": {
+        "true_negative": 79336,
+        "false_positive": 869,
+        "false_negative": 808,
+        "true_positive": 11
+      },
+      "sample_size": 81024
+    },
+    "logistic_regression": {
+      "pr_auc": 0.0501,
+      "roc_auc": 0.65,
+      "brier_score": 0.218358,
+      "positive_class_prevalence": 0.0101,
+      "threshold": 0.5,
+      "precision": 0.0172,
+      "recall": 0.547,
+      "f1": 0.0334,
+      "confusion_matrix": {
+        "true_negative": 54625,
+        "false_positive": 25580,
+        "false_negative": 371,
+        "true_positive": 448
+      },
+      "sample_size": 81024
+    },
+    "lightgbm": {
+      "pr_auc": 0.056,
+      "roc_auc": 0.6707,
+      "brier_score": 0.162645,
+      "positive_class_prevalence": 0.0101,
+      "threshold": 0.5,
+      "precision": 0.0236,
+      "recall": 0.4383,
+      "f1": 0.0448,
+      "confusion_matrix": {
+        "true_negative": 65355,
+        "false_positive": 14850,
+        "false_negative": 460,
+        "true_positive": 359
+      },
+      "sample_size": 81024
+    }
+  },
+  "validation_optimal_threshold_eval": {
+    "pr_auc": 0.056,
+    "roc_auc": 0.6707,
+    "brier_score": 0.162645,
+    "positive_class_prevalence": 0.0101,
+    "threshold": 0.87,
+    "precision": 0.1663,
+    "recall": 0.1013,
+    "f1": 0.1259,
+    "confusion_matrix": {
+      "true_negative": 79789,
+      "false_positive": 416,
+      "false_negative": 736,
+      "true_positive": 83
+    },
+    "sample_size": 81024
+  },
+  "test_evaluation_default_threshold": {
+    "pr_auc": 0.0742,
+    "roc_auc": 0.6589,
+    "brier_score": 0.155868,
+    "positive_class_prevalence": 0.0101,
+    "threshold": 0.5,
+    "precision": 0.023,
+    "recall": 0.4139,
+    "f1": 0.0435,
+    "confusion_matrix": {
+      "true_negative": 43994,
+      "false_positive": 9610,
+      "false_negative": 320,
+      "true_positive": 226
+    },
+    "sample_size": 54150
+  },
+  "test_evaluation_selected_threshold": {
+    "pr_auc": 0.0742,
+    "roc_auc": 0.6589,
+    "brier_score": 0.155868,
+    "positive_class_prevalence": 0.0101,
+    "threshold": 0.87,
+    "precision": 0.2432,
+    "recall": 0.1154,
+    "f1": 0.1565,
+    "confusion_matrix": {
+      "true_negative": 53408,
+      "false_positive": 196,
+      "false_negative": 483,
+      "true_positive": 63
+    },
+    "sample_size": 54150
+  },
+  "split_sample_sizes": {
+    "train": 314245,
+    "validation": 81024,
+    "test": 54150
+  },
+  "artifact_path": "data/artifacts/models\\cancellation_landmark\\baseline_dummy.joblib",
+  "saved_at": "2026-11-18T11:34:01.936465+00:00"
+}

@@ -1,0 +1,225 @@
+{
+  "task_name": "cancellation/operational_landmark",
+  "prediction_point": "t_allot + 5 min (Operational Dispatch Landmark)",
+  "eligible_cohort_description": "Active orders at t_allot + 5min (excluding orders cancelled or delivered prior to landmark)",
+  "total_rows": 449419,
+  "train_rows": 314245,
+  "val_rows": 81024,
+  "test_rows": 54150,
+  "features": [
+    {
+      "name": "last_mile_distance",
+      "dtype": "float64",
+      "prediction_point": "t_order",
+      "description": "Restaurant-to-customer doorstep distance in km",
+      "imputation": "median=2.67km"
+    },
+    {
+      "name": "is_zero_last_mile",
+      "dtype": "int32",
+      "prediction_point": "t_order",
+      "description": "Binary indicator for missing/zero last mile distance",
+      "imputation": "imputed with median"
+    },
+    {
+      "name": "last_mile_distance_sq",
+      "dtype": "float64",
+      "prediction_point": "t_order",
+      "description": "Quadratic last-mile distance for non-linear travel latency",
+      "imputation": null
+    },
+    {
+      "name": "distance_bracket",
+      "dtype": "category",
+      "prediction_point": "t_order",
+      "description": "Binned distance tier (ultra_short, short, medium, long, hyper_long)",
+      "imputation": null
+    },
+    {
+      "name": "order_hour",
+      "dtype": "int32",
+      "prediction_point": "t_order",
+      "description": "Order placement hour of day (0-23)",
+      "imputation": null
+    },
+    {
+      "name": "hour_sin",
+      "dtype": "float64",
+      "prediction_point": "t_order",
+      "description": "Cyclic sine transform of hour of day",
+      "imputation": null
+    },
+    {
+      "name": "hour_cos",
+      "dtype": "float64",
+      "prediction_point": "t_order",
+      "description": "Cyclic cosine transform of hour of day",
+      "imputation": null
+    },
+    {
+      "name": "order_dayofweek",
+      "dtype": "int32",
+      "prediction_point": "t_order",
+      "description": "Order placement day of week (0=Mon, 6=Sun)",
+      "imputation": null
+    },
+    {
+      "name": "dow_sin",
+      "dtype": "float64",
+      "prediction_point": "t_order",
+      "description": "Cyclic sine transform of day of week",
+      "imputation": null
+    },
+    {
+      "name": "dow_cos",
+      "dtype": "float64",
+      "prediction_point": "t_order",
+      "description": "Cyclic cosine transform of day of week",
+      "imputation": null
+    },
+    {
+      "name": "is_weekend",
+      "dtype": "int32",
+      "prediction_point": "t_order",
+      "description": "Binary indicator for Saturday/Sunday demand",
+      "imputation": null
+    },
+    {
+      "name": "meal_period",
+      "dtype": "category",
+      "prediction_point": "t_order",
+      "description": "Operational meal window (BREAKFAST, LUNCH_PEAK, etc.)",
+      "imputation": null
+    },
+    {
+      "name": "is_peak_meal_window",
+      "dtype": "int32",
+      "prediction_point": "t_order",
+      "description": "Binary flag for lunch or dinner peak dispatch window",
+      "imputation": null
+    },
+    {
+      "name": "rolling_order_volume_15m",
+      "dtype": "float64",
+      "prediction_point": "t_order",
+      "description": "Backward-looking order placement volume in preceding 15m",
+      "imputation": null
+    },
+    {
+      "name": "rolling_order_volume_60m",
+      "dtype": "float64",
+      "prediction_point": "t_order",
+      "description": "Backward-looking order placement volume in preceding 60m",
+      "imputation": null
+    },
+    {
+      "name": "demand_acceleration",
+      "dtype": "float64",
+      "prediction_point": "t_order",
+      "description": "Ratio of recent 15m surge intensity to hourly average",
+      "imputation": null
+    },
+    {
+      "name": "first_mile_distance",
+      "dtype": "float64",
+      "prediction_point": "t_landmark",
+      "description": "Courier-to-restaurant transit distance in km",
+      "imputation": "capped at 20km"
+    },
+    {
+      "name": "is_extreme_first_mile",
+      "dtype": "int32",
+      "prediction_point": "t_landmark",
+      "description": "Binary flag for courier transit distance > 20km",
+      "imputation": null
+    },
+    {
+      "name": "first_to_last_mile_ratio",
+      "dtype": "float64",
+      "prediction_point": "t_landmark",
+      "description": "Ratio of courier pickup distance to customer dropoff distance",
+      "imputation": null
+    },
+    {
+      "name": "total_route_distance",
+      "dtype": "float64",
+      "prediction_point": "t_landmark",
+      "description": "Sum of first-mile and last-mile distances",
+      "imputation": null
+    },
+    {
+      "name": "courier_session_time_min",
+      "dtype": "float64",
+      "prediction_point": "t_landmark",
+      "description": "Courier active shift duration in minutes at assignment",
+      "imputation": "median=175.5min"
+    },
+    {
+      "name": "courier_fatigue_flag",
+      "dtype": "int32",
+      "prediction_point": "t_landmark",
+      "description": "Binary indicator for courier shift duration > 8 hours",
+      "imputation": null
+    },
+    {
+      "name": "is_delayed_allotment",
+      "dtype": "int32",
+      "prediction_point": "t_landmark",
+      "description": "Binary flag if allotment delay exceeded 3 minutes",
+      "imputation": null
+    },
+    {
+      "name": "allot_delay_min",
+      "dtype": "float64",
+      "prediction_point": "t_landmark",
+      "description": "Continuous minutes between order placement and courier assignment",
+      "imputation": null
+    },
+    {
+      "name": "has_accepted_by_landmark",
+      "dtype": "int32",
+      "prediction_point": "t_landmark",
+      "description": "Binary indicator if courier accepted assignment within 5 minutes",
+      "imputation": null
+    },
+    {
+      "name": "accept_delay_at_landmark",
+      "dtype": "float64",
+      "prediction_point": "t_landmark",
+      "description": "Observed courier acceptance delay capped at 5 minutes",
+      "imputation": null
+    }
+  ],
+  "target": {
+    "name": "target_cancelled_post_landmark",
+    "task_type": "BINARY_CLASSIFICATION",
+    "description": "Binary indicator if order active at t_allot + 5min subsequently cancels before delivery",
+    "stats": {
+      "class_0_delivered": 444668,
+      "class_1_cancelled_post_landmark": 4751,
+      "positive_rate_pct": 1.0571
+    }
+  },
+  "exclusions_log": {
+    "initial_rows": 449999,
+    "cancelled_prior_to_landmark": 466,
+    "delivered_prior_to_landmark": 114,
+    "active_at_landmark_rows": 449419,
+    "cancelled_post_landmark_count": 4751,
+    "cancelled_post_landmark_rate_pct": 1.0571
+  },
+  "leakage_exclusions": [
+    "cancelled_time",
+    "delivered_time",
+    "pickup_time",
+    "transit_duration_min"
+  ],
+  "fitted_parameters": {
+    "fit_partition": "TRAIN (2021-01-26 00:00:00 to 2021-02-03 00:00:00)",
+    "fit_sample_size": 314646,
+    "fitted_median_last_mile_km": 2.67,
+    "fitted_median_session_time_min": 178.15
+  },
+  "data_provenance": "cbhavik/swiggyzomato-order-information (Kaggle)",
+  "created_at": "2026-11-18T11:26:46.264216+00:00"
+}

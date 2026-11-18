@@ -1,0 +1,76 @@
+{
+  "execution_timestamp": "2026-11-18 11:55:25 UTC",
+  "total_runtime_seconds": 9.9,
+  "task_a_eta": {
+    "test_sample_size": 53588,
+    "overall_lightgbm_mae": 9.385,
+    "overall_lightgbm_rmse": 12.7665,
+    "core_sla_20_35m_mae": 5.81,
+    "long_tail_over_50m_mae": 27.7
+  },
+  "task_b_allocation_delay": {
+    "test_sample_size": 54221,
+    "prevalence_pct": 6.17,
+    "selected_threshold": 0.47,
+    "precision": 0.0664,
+    "recall": 0.6259,
+    "f1": 0.1201,
+    "alerts_per_1000": 580.97,
+    "lift_over_prevalence": 1.08
+  },
+  "task_c1_upfront_cancellation": {
+    "test_sample_size": 54221,
+    "prevalence_pct": 1.11,
+    "selected_threshold": 0.61,
+    "pr_auc": 0.0207,
+    "precision": 0.0195,
+    "recall": 0.1095,
+    "lift_over_prevalence": 1.76
+  },
+  "task_c2_landmark_cancellation": {
+    "test_sample_size": 54150,
+    "total_cancellations": 546,
+    "prevalence_pct": 1.01,
+    "selected_threshold": 0.87,
+    "pr_auc": 0.0742,
+    "precision": 0.2432,
+    "recall": 0.1154,
+    "f1": 0.1565,
+    "alerts_per_1000": 4.78,
+    "lift_over_prevalence": 24.08
+  },
+  "comparison_c1_vs_c2": {
+    "population_difference": {
+      "c1_test_orders": 54221,
+      "c2_test_orders": 54150,
+      "excluded_from_c2_in_test": 71,
+      "exclusion_reason": "Orders cancelled prior to courier allotment or within the 5-minute pre-landmark window are physically unable to reach the landmark state and cannot be evaluated in C2."
+    },
+    "predictive_performance_delta": {
+      "test_pr_auc_gain": 0.0535,
+      "test_roc_auc_gain": 0.1043,
+      "precision_gain_at_selected_threshold": 0.2237,
+      "lift_gain": 22.32
+    },
+    "telemetry_information_gain": [
+      "First-mile courier distance and courier travel route distance to pickup.",
+      "Courier acceptance status at 5-minute checkpoint (has courier accepted or is request lingering/ignored).",
+      "Allotment delay (elapsed time before first courier assigned).",
+      "Courier shift fatigue (session length in minutes)."
+    ]
+  },
+  "artifacts_generated": [
+    "data/artifacts/diagnostics/task_a_eta_diagnostics.json",
+    "data/artifacts/diagnostics/task_b_allocation_diagnostics.json",
+    "data/artifacts/diagnostics/task_c_cancellation_diagnostics.json",
+    "data/artifacts/diagnostics/explainability_summary.json",
+    "data/artifacts/diagnostics/plots/task_a_eta_error_analysis.png",
+    "data/artifacts/diagnostics/plots/task_b_allocation_tradeoff.png",
+    "data/artifacts/diagnostics/plots/task_c1_c2_pr_curves.png",
+    "data/artifacts/diagnostics/plots/task_c1_c2_calibration.png",
+    "data/artifacts/diagnostics/plots/task_c2_operational_tradeoffs.png",
+    "data/artifacts/diagnostics/plots/shap_summary_task_a.png",
+    "data/artifacts/diagnostics/plots/shap_summary_task_b.png",
+    "data/artifacts/diagnostics/plots/shap_summary_task_c2.png"
+  ]
+}

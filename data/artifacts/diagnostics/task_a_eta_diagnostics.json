@@ -1,0 +1,242 @@
+{
+  "task_name": "Task A: Delivery Duration Regression (ETA)",
+  "test_sample_size": 53588,
+  "model_capability": {
+    "output_type": "point_prediction",
+    "conditional_quantiles_supported": false,
+    "prediction_intervals": "FUTURE_WORK",
+    "unvalidated_policies": [
+      "ETA + 15-minute operational intervention rule (requires retrospective simulation validation)"
+    ]
+  },
+  "overall_evaluation": {
+    "lightgbm": {
+      "mae": 9.385,
+      "rmse": 12.7665,
+      "r2": 0.0908,
+      "sample_size": 53588,
+      "absolute_error_percentiles": {
+        "p10": 1.5008908979039608,
+        "p25": 3.7693047022888937,
+        "p50_median": 7.7826351713396384,
+        "p75": 12.607838863060486,
+        "p90": 17.696800645282842,
+        "p95": 22.546880923034088,
+        "p99": 41.6136249699301
+      },
+      "performance_by_duration_range": {
+        "under_20min": {
+          "count": 8343,
+          "pct_of_total": 15.57,
+          "mae": 13.12,
+          "rmse": 13.67
+        },
+        "20_to_35min": {
+          "count": 27271,
+          "pct_of_total": 50.89,
+          "mae": 5.81,
+          "rmse": 7.05
+        },
+        "35_to_50min": {
+          "count": 13326,
+          "pct_of_total": 24.87,
+          "mae": 7.98,
+          "rmse": 9.45
+        },
+        "over_50min": {
+          "count": 4648,
+          "pct_of_total": 8.67,
+          "mae": 27.7,
+          "rmse": 31.56
+        }
+      }
+    },
+    "ridge": {
+      "mae": 9.5489,
+      "rmse": 12.9133,
+      "r2": 0.0698,
+      "sample_size": 53588,
+      "absolute_error_percentiles": {
+        "p10": 1.5297089938833064,
+        "p25": 3.8764840280854997,
+        "p50_median": 7.920241376625189,
+        "p75": 12.896987605435342,
+        "p90": 18.06743593210406,
+        "p95": 22.709905290364873,
+        "p99": 41.52849048227685
+      },
+      "performance_by_duration_range": {
+        "under_20min": {
+          "count": 8343,
+          "pct_of_total": 15.57,
+          "mae": 13.33,
+          "rmse": 13.99
+        },
+        "20_to_35min": {
+          "count": 27271,
+          "pct_of_total": 50.89,
+          "mae": 6.11,
+          "rmse": 7.42
+        },
+        "35_to_50min": {
+          "count": 13326,
+          "pct_of_total": 24.87,
+          "mae": 7.94,
+          "rmse": 9.5
+        },
+        "over_50min": {
+          "count": 4648,
+          "pct_of_total": 8.67,
+          "mae": 27.55,
+          "rmse": 31.47
+        }
+      }
+    },
+    "dummy": {
+      "mae": 9.7317,
+      "rmse": 13.6803,
+      "r2": -0.044,
+      "sample_size": 53588,
+      "absolute_error_percentiles": {
+        "p10": 1.4166666666666679,
+        "p25": 3.56666666666667,
+        "p50_median": 7.516666666666662,
+        "p75": 12.816666666666666,
+        "p90": 19.538333333333384,
+        "p95": 26.516666666666662,
+        "p99": 45.85216666666663
+      },
+      "performance_by_duration_range": {
+        "under_20min": {
+          "count": 8343,
+          "pct_of_total": 15.57,
+          "mae": 12.87,
+          "rmse": 13.15
+        },
+        "20_to_35min": {
+          "count": 27271,
+          "pct_of_total": 50.89,
+          "mae": 3.87,
+          "rmse": 4.59
+        },
+        "35_to_50min": {
+          "count": 13326,
+          "pct_of_total": 24.87,
+          "mae": 11.76,
+          "rmse": 12.46
+        },
+        "over_50min": {
+          "count": 4648,
+          "pct_of_total": 8.67,
+          "mae": 32.68,
+          "rmse": 35.75
+        }
+      }
+    }
+  },
+  "subgroup_comparison": {
+    "under_20min": {
+      "sample_size": 8343,
+      "pct_of_total": 15.57,
+      "lightgbm": {
+        "mae": 13.12,
+        "rmse": 13.67,
+        "p50_abs_err": 13.09,
+        "p75_abs_err": 15.72,
+        "p90_abs_err": 18.14,
+        "p95_abs_err": 19.48
+      },
+      "ridge": {
+        "mae": 13.33,
+        "rmse": 13.99
+      },
+      "dummy": {
+        "mae": 12.87,
+        "rmse": 13.15
+      }
+    },
+    "20_to_35min": {
+      "sample_size": 27271,
+      "pct_of_total": 50.89,
+      "lightgbm": {
+        "mae": 5.81,
+        "rmse": 7.05,
+        "p50_abs_err": 5.2,
+        "p75_abs_err": 8.49,
+        "p90_abs_err": 11.52,
+        "p95_abs_err": 13.22
+      },
+      "ridge": {
+        "mae": 6.11,
+        "rmse": 7.42
+      },
+      "dummy": {
+        "mae": 3.87,
+        "rmse": 4.59
+      }
+    },
+    "35_to_50min": {
+      "sample_size": 13326,
+      "pct_of_total": 24.87,
+      "lightgbm": {
+        "mae": 7.98,
+        "rmse": 9.45,
+        "p50_abs_err": 7.5,
+        "p75_abs_err": 11.5,
+        "p90_abs_err": 15.03,
+        "p95_abs_err": 17.1
+      },
+      "ridge": {
+        "mae": 7.94,
+        "rmse": 9.5
+      },
+      "dummy": {
+        "mae": 11.76,
+        "rmse": 12.46
+      }
+    },
+    "over_50min": {
+      "sample_size": 4648,
+      "pct_of_total": 8.67,
+      "lightgbm": {
+        "mae": 27.7,
+        "rmse": 31.56,
+        "p50_abs_err": 23.79,
+        "p75_abs_err": 32.11,
+        "p90_abs_err": 43.13,
+        "p95_abs_err": 54.16
+      },
+      "ridge": {
+        "mae": 27.55,
+        "rmse": 31.47
+      },
+      "dummy": {
+        "mae": 32.68,
+        "rmse": 35.75
+      }
+    }
+  },
+  "bias_analysis": {
+    "overpredicted_orders": {
+      "count": 31480,
+      "pct": 58.74,
+      "mean_overprediction_minutes": 8.1
+    },
+    "underpredicted_orders": {
+      "count": 22108,
+      "pct": 41.26,
+      "mean_underprediction_minutes": 11.22
+    },
+    "exact_predictions": 0
+  },
+  "high_error_profile": {
+    "threshold_minutes": 17.7,
+    "high_error_count": 5359,
+    "high_error_mean_last_mile_km": 3.09,
+    "normal_error_mean_last_mile_km": 2.87,
+    "high_error_peak_meal_pct": 29.09,
+    "normal_error_peak_meal_pct": 23.19,
+    "high_error_mean_actual_duration": 52.38,
+    "normal_error_mean_actual_duration": 29.84
+  }
+}

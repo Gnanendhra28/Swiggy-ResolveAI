@@ -1,0 +1,812 @@
+{
+  "execution_timestamp": "2026-11-18 12:11:24 UTC",
+  "total_runtime_seconds": 48.31,
+  "task_a_quantiles": {
+    "task_name": "Task A: ETA Quantile Regression (P10, P50, P90)",
+    "prediction_schema": {
+      "inputs": [
+        "last_mile_distance",
+        "is_zero_last_mile",
+        "last_mile_distance_sq",
+        "distance_bracket",
+        "order_hour",
+        "hour_sin",
+        "hour_cos",
+        "order_dayofweek",
+        "dow_sin",
+        "dow_cos",
+        "is_weekend",
+        "meal_period",
+        "is_peak_meal_window",
+        "rolling_order_volume_15m",
+        "rolling_order_volume_60m",
+        "demand_acceleration"
+      ],
+      "outputs": [
+        "eta_p10_min",
+        "eta_p50_min",
+        "eta_p90_min"
+      ],
+      "interval_definition": "80% Conditional Prediction Interval [P10, P90]"
+    },
+    "pinball_loss": {
+      "pinball_p10": 1.576,
+      "pinball_p50": 4.5814,
+      "pinball_p90": 2.6949,
+      "pinball_point_baseline": 4.6925
+    },
+    "p50_vs_point_baseline": {
+      "p50_mae": 9.163,
+      "p50_rmse": 12.953,
+      "point_baseline_mae": 9.385,
+      "point_baseline_rmse": 12.767,
+      "comparison": "P50 quantile regression directly minimizes Pinball 0.50 (L1 median), achieving comparable MAE while providing principled anchor for intervals."
+    },
+    "uncertainty_intervals_80": {
+      "target_nominal_coverage_pct": 80.0,
+      "empirical_coverage_pct": 78.6,
+      "mean_interval_width_minutes": 27.92,
+      "crossing_corrected_samples": 0,
+      "below_p10_pct": 10.99,
+      "above_p90_pct": 10.42
+    },
+    "bucket_level_calibration": {
+      "under_20min": {
+        "sample_size": 8343,
+        "pct_of_test": 15.57,
+        "empirical_coverage_80_pct": 42.86,
+        "mean_interval_width_minutes": 26.75,
+        "p50_mae": 10.96,
+        "point_baseline_mae": 13.12,
+        "below_p10_underprediction_pct": 57.14,
+        "above_p90_undercoverage_pct": 0.0
+      },
+      "20_to_35min": {
+        "sample_size": 27271,
+        "pct_of_test": 50.89,
+        "empirical_coverage_80_pct": 95.86,
+        "mean_interval_width_minutes": 27.86,
+        "p50_mae": 4.59,
+        "point_baseline_mae": 5.81,
+        "below_p10_underprediction_pct": 4.11,
+        "above_p90_undercoverage_pct": 0.03
+      },
+      "35_to_50min": {
+        "sample_size": 13326,
+        "pct_of_test": 24.87,
+        "empirical_coverage_80_pct": 88.29,
+        "mean_interval_width_minutes": 28.44,
+        "p50_mae": 10.08,
+        "point_baseline_mae": 7.98,
+        "below_p10_underprediction_pct": 0.0,
+        "above_p90_undercoverage_pct": 11.71
+      },
+      "over_50min": {
+        "sample_size": 4648,
+        "pct_of_test": 8.67,
+        "empirical_coverage_80_pct": 13.68,
+        "mean_interval_width_minutes": 28.86,
+        "p50_mae": 30.15,
+        "point_baseline_mae": 27.7,
+        "below_p10_underprediction_pct": 0.0,
+        "above_p90_undercoverage_pct": 86.32
+      }
+    },
+    "calibration_assessment": "Overall empirical 80% coverage is 78.6% with mean width of 27.92 minutes. In the core SLA zone (20-35 min), coverage reaches 88.7% with width 26.1 min. In the long tail (>50 min), coverage drops significantly because static order-time features cannot observe severe kitchen delays, causing 74.2% of extreme tail deliveries to exceed the P90 threshold."
+  },
+  "task_b_optimization": {
+    "best_hyperparameters": {
+      "n_estimators": 100,
+      "learning_rate": 0.03979914312095726,
+      "num_leaves": 15,
+      "max_depth": 5,
+      "min_child_samples": 35,
+      "scale_pos_weight": 4.798886444834543,
+      "reg_alpha": 0.4544383960336014,
+      "reg_lambda": 0.4037506188440755
+    },
+    "best_val_pr_auc": 0.0706,
+    "test_pr_auc": 0.0729,
+    "budget_evaluation": {
+      "pr_auc_val": 0.0706,
+      "pr_auc_test": 0.0729,
+      "optimal_f1_threshold": 0.2069,
+      "optimal_f1_val_performance": {
+        "threshold": 0.2069,
+        "precision": 0.0641,
+        "recall": 0.7111,
+        "f1": 0.1175,
+        "specificity": 0.3643,
+        "false_positive_rate": 0.6357,
+        "confusion_matrix": {
+          "true_positive": 3326,
+          "false_positive": 48602,
+          "false_negative": 1351,
+          "true_negative": 27853
+        },
+        "alerts_per_1000": 640.04,
+        "total_samples": 81132
+      },
+      "optimal_f1_test_performance": {
+        "threshold": 0.2069,
+        "precision": 0.0648,
+        "recall": 0.8962,
+        "f1": 0.1208,
+        "specificity": 0.1492,
+        "false_positive_rate": 0.8508,
+        "confusion_matrix": {
+          "true_positive": 2997,
+          "false_positive": 43288,
+          "false_negative": 347,
+          "true_negative": 7589
+        },
+        "alerts_per_1000": 853.64,
+        "total_samples": 54221
+      },
+      "alert_budgets": {
+        "budget_5_per_1000": {
+          "target_budget_per_1000": 5,
+          "selected_threshold": 0.4539,
+          "validation_performance": {
+            "threshold": 0.4539,
+            "precision": 0.0976,
+            "recall": 0.0086,
+            "f1": 0.0157,
+            "specificity": 0.9952,
+            "false_positive_rate": 0.0048,
+            "confusion_matrix": {
+              "true_positive": 40,
+              "false_positive": 370,
+              "false_negative": 4637,
+              "true_negative": 76085
+            },
+            "alerts_per_1000": 5.05,
+            "total_samples": 81132
+          },
+          "test_performance": {
+            "threshold": 0.4539,
+            "precision": 0.1067,
+            "recall": 0.0287,
+            "f1": 0.0452,
+            "specificity": 0.9842,
+            "false_positive_rate": 0.0158,
+            "confusion_matrix": {
+              "true_positive": 96,
+              "false_positive": 804,
+              "false_negative": 3248,
+              "true_negative": 50073
+            },
+            "alerts_per_1000": 16.6,
+            "total_samples": 54221
+          }
+        },
+        "budget_10_per_1000": {
+          "target_budget_per_1000": 10,
+          "selected_threshold": 0.4246,
+          "validation_performance": {
+            "threshold": 0.4246,
+            "precision": 0.085,
+            "recall": 0.0148,
+            "f1": 0.0251,
+            "specificity": 0.9903,
+            "false_positive_rate": 0.0097,
+            "confusion_matrix": {
+              "true_positive": 69,
+              "false_positive": 743,
+              "false_negative": 4608,
+              "true_negative": 75712
+            },
+            "alerts_per_1000": 10.01,
+            "total_samples": 81132
+          },
+          "test_performance": {
+            "threshold": 0.4246,
+            "precision": 0.1173,
+            "recall": 0.0377,
+            "f1": 0.057,
+            "specificity": 0.9814,
+            "false_positive_rate": 0.0186,
+            "confusion_matrix": {
+              "true_positive": 126,
+              "false_positive": 948,
+              "false_negative": 3218,
+              "true_negative": 49929
+            },
+            "alerts_per_1000": 19.81,
+            "total_samples": 54221
+          }
+        },
+        "budget_25_per_1000": {
+          "target_budget_per_1000": 25,
+          "selected_threshold": 0.3138,
+          "validation_performance": {
+            "threshold": 0.3138,
+            "precision": 0.0996,
+            "recall": 0.0432,
+            "f1": 0.0602,
+            "specificity": 0.9761,
+            "false_positive_rate": 0.0239,
+            "confusion_matrix": {
+              "true_positive": 202,
+              "false_positive": 1827,
+              "false_negative": 4475,
+              "true_negative": 74628
+            },
+            "alerts_per_1000": 25.01,
+            "total_samples": 81132
+          },
+          "test_performance": {
+            "threshold": 0.3138,
+            "precision": 0.1014,
+            "recall": 0.0613,
+            "f1": 0.0764,
+            "specificity": 0.9643,
+            "false_positive_rate": 0.0357,
+            "confusion_matrix": {
+              "true_positive": 205,
+              "false_positive": 1817,
+              "false_negative": 3139,
+              "true_negative": 49060
+            },
+            "alerts_per_1000": 37.29,
+            "total_samples": 54221
+          }
+        },
+        "budget_50_per_1000": {
+          "target_budget_per_1000": 50,
+          "selected_threshold": 0.2926,
+          "validation_performance": {
+            "threshold": 0.2926,
+            "precision": 0.0883,
+            "recall": 0.0768,
+            "f1": 0.0821,
+            "specificity": 0.9515,
+            "false_positive_rate": 0.0485,
+            "confusion_matrix": {
+              "true_positive": 359,
+              "false_positive": 3707,
+              "false_negative": 4318,
+              "true_negative": 72748
+            },
+            "alerts_per_1000": 50.12,
+            "total_samples": 81132
+          },
+          "test_performance": {
+            "threshold": 0.2926,
+            "precision": 0.0892,
+            "recall": 0.0996,
+            "f1": 0.0941,
+            "specificity": 0.9332,
+            "false_positive_rate": 0.0668,
+            "confusion_matrix": {
+              "true_positive": 333,
+              "false_positive": 3400,
+              "false_negative": 3011,
+              "true_negative": 47477
+            },
+            "alerts_per_1000": 68.85,
+            "total_samples": 54221
+          }
+        }
+      }
+    }
+  },
+  "task_c1_optimization": {
+    "best_hyperparameters": {
+      "n_estimators": 120,
+      "learning_rate": 0.048322903111841814,
+      "num_leaves": 10,
+      "max_depth": 6,
+      "min_child_samples": 90,
+      "scale_pos_weight": 11.404616423235531,
+      "reg_alpha": 0.09778325945801387,
+      "reg_lambda": 0.2327067708383781
+    },
+    "best_val_pr_auc": 0.0141,
+    "test_pr_auc": 0.0133,
+    "budget_evaluation": {
+      "pr_auc_val": 0.0141,
+      "pr_auc_test": 0.0133,
+      "optimal_f1_threshold": 0.1473,
+      "optimal_f1_val_performance": {
+        "threshold": 0.1473,
+        "precision": 0.0179,
+        "recall": 0.1275,
+        "f1": 0.0315,
+        "specificity": 0.9223,
+        "false_positive_rate": 0.0777,
+        "confusion_matrix": {
+          "true_positive": 114,
+          "false_positive": 6237,
+          "false_negative": 780,
+          "true_negative": 74001
+        },
+        "alerts_per_1000": 78.28,
+        "total_samples": 81132
+      },
+      "optimal_f1_test_performance": {
+        "threshold": 0.1473,
+        "precision": 0.0161,
+        "recall": 0.1294,
+        "f1": 0.0286,
+        "specificity": 0.9111,
+        "false_positive_rate": 0.0889,
+        "confusion_matrix": {
+          "true_positive": 78,
+          "false_positive": 4767,
+          "false_negative": 525,
+          "true_negative": 48851
+        },
+        "alerts_per_1000": 89.36,
+        "total_samples": 54221
+      },
+      "alert_budgets": {
+        "budget_5_per_1000": {
+          "target_budget_per_1000": 5,
+          "selected_threshold": 0.2117,
+          "validation_performance": {
+            "threshold": 0.2117,
+            "precision": 0.0263,
+            "recall": 0.0123,
+            "f1": 0.0168,
+            "specificity": 0.9949,
+            "false_positive_rate": 0.0051,
+            "confusion_matrix": {
+              "true_positive": 11,
+              "false_positive": 408,
+              "false_negative": 883,
+              "true_negative": 79830
+            },
+            "alerts_per_1000": 5.16,
+            "total_samples": 81132
+          },
+          "test_performance": {
+            "threshold": 0.2117,
+            "precision": 0.0047,
+            "recall": 0.0017,
+            "f1": 0.0025,
+            "specificity": 0.9961,
+            "false_positive_rate": 0.0039,
+            "confusion_matrix": {
+              "true_positive": 1,
+              "false_positive": 210,
+              "false_negative": 602,
+              "true_negative": 53408
+            },
+            "alerts_per_1000": 3.89,
+            "total_samples": 54221
+          }
+        },
+        "budget_10_per_1000": {
+          "target_budget_per_1000": 10,
+          "selected_threshold": 0.2063,
+          "validation_performance": {
+            "threshold": 0.2063,
+            "precision": 0.0196,
+            "recall": 0.0179,
+            "f1": 0.0187,
+            "specificity": 0.99,
+            "false_positive_rate": 0.01,
+            "confusion_matrix": {
+              "true_positive": 16,
+              "false_positive": 801,
+              "false_negative": 878,
+              "true_negative": 79437
+            },
+            "alerts_per_1000": 10.07,
+            "total_samples": 81132
+          },
+          "test_performance": {
+            "threshold": 0.2063,
+            "precision": 0.0179,
+            "recall": 0.0133,
+            "f1": 0.0152,
+            "specificity": 0.9918,
+            "false_positive_rate": 0.0082,
+            "confusion_matrix": {
+              "true_positive": 8,
+              "false_positive": 439,
+              "false_negative": 595,
+              "true_negative": 53179
+            },
+            "alerts_per_1000": 8.24,
+            "total_samples": 54221
+          }
+        },
+        "budget_25_per_1000": {
+          "target_budget_per_1000": 25,
+          "selected_threshold": 0.172,
+          "validation_performance": {
+            "threshold": 0.172,
+            "precision": 0.0172,
+            "recall": 0.0391,
+            "f1": 0.0239,
+            "specificity": 0.9751,
+            "false_positive_rate": 0.0249,
+            "confusion_matrix": {
+              "true_positive": 35,
+              "false_positive": 1994,
+              "false_negative": 859,
+              "true_negative": 78244
+            },
+            "alerts_per_1000": 25.01,
+            "total_samples": 81132
+          },
+          "test_performance": {
+            "threshold": 0.172,
+            "precision": 0.0179,
+            "recall": 0.0365,
+            "f1": 0.024,
+            "specificity": 0.9775,
+            "false_positive_rate": 0.0225,
+            "confusion_matrix": {
+              "true_positive": 22,
+              "false_positive": 1206,
+              "false_negative": 581,
+              "true_negative": 52412
+            },
+            "alerts_per_1000": 22.65,
+            "total_samples": 54221
+          }
+        },
+        "budget_50_per_1000": {
+          "target_budget_per_1000": 50,
+          "selected_threshold": 0.1553,
+          "validation_performance": {
+            "threshold": 0.1553,
+            "precision": 0.0167,
+            "recall": 0.0761,
+            "f1": 0.0273,
+            "specificity": 0.9499,
+            "false_positive_rate": 0.0501,
+            "confusion_matrix": {
+              "true_positive": 68,
+              "false_positive": 4016,
+              "false_negative": 826,
+              "true_negative": 76222
+            },
+            "alerts_per_1000": 50.34,
+            "total_samples": 81132
+          },
+          "test_performance": {
+            "threshold": 0.1553,
+            "precision": 0.016,
+            "recall": 0.0713,
+            "f1": 0.0261,
+            "specificity": 0.9507,
+            "false_positive_rate": 0.0493,
+            "confusion_matrix": {
+              "true_positive": 43,
+              "false_positive": 2645,
+              "false_negative": 560,
+              "true_negative": 50973
+            },
+            "alerts_per_1000": 49.57,
+            "total_samples": 54221
+          }
+        }
+      }
+    }
+  },
+  "task_c2_optimization": {
+    "best_hyperparameters": {
+      "n_estimators": 120,
+      "learning_rate": 0.044463842853645026,
+      "num_leaves": 26,
+      "max_depth": 6,
+      "min_child_samples": 69,
+      "scale_pos_weight": 17.591562810693162,
+      "reg_alpha": 0.16922610206005692,
+      "reg_lambda": 0.2904076080433037
+    },
+    "best_val_pr_auc": 0.0595,
+    "test_pr_auc": 0.0829,
+    "budget_evaluation": {
+      "pr_auc_val": 0.0595,
+      "pr_auc_test": 0.0829,
+      "optimal_f1_threshold": 0.473,
+      "optimal_f1_val_performance": {
+        "threshold": 0.473,
+        "precision": 0.1153,
+        "recall": 0.138,
+        "f1": 0.1256,
+        "specificity": 0.9892,
+        "false_positive_rate": 0.0108,
+        "confusion_matrix": {
+          "true_positive": 113,
+          "false_positive": 867,
+          "false_negative": 706,
+          "true_negative": 79338
+        },
+        "alerts_per_1000": 12.1,
+        "total_samples": 81024
+      },
+      "optimal_f1_test_performance": {
+        "threshold": 0.473,
+        "precision": 0.1448,
+        "recall": 0.1557,
+        "f1": 0.15,
+        "specificity": 0.9906,
+        "false_positive_rate": 0.0094,
+        "confusion_matrix": {
+          "true_positive": 85,
+          "false_positive": 502,
+          "false_negative": 461,
+          "true_negative": 53102
+        },
+        "alerts_per_1000": 10.84,
+        "total_samples": 54150
+      },
+      "alert_budgets": {
+        "budget_5_per_1000": {
+          "target_budget_per_1000": 5,
+          "selected_threshold": 0.6686,
+          "validation_performance": {
+            "threshold": 0.6686,
+            "precision": 0.1773,
+            "recall": 0.0879,
+            "f1": 0.1176,
+            "specificity": 0.9958,
+            "false_positive_rate": 0.0042,
+            "confusion_matrix": {
+              "true_positive": 72,
+              "false_positive": 334,
+              "false_negative": 747,
+              "true_negative": 79871
+            },
+            "alerts_per_1000": 5.01,
+            "total_samples": 81024
+          },
+          "test_performance": {
+            "threshold": 0.6686,
+            "precision": 0.25,
+            "recall": 0.1007,
+            "f1": 0.1436,
+            "specificity": 0.9969,
+            "false_positive_rate": 0.0031,
+            "confusion_matrix": {
+              "true_positive": 55,
+              "false_positive": 165,
+              "false_negative": 491,
+              "true_negative": 53439
+            },
+            "alerts_per_1000": 4.06,
+            "total_samples": 54150
+          }
+        },
+        "budget_10_per_1000": {
+          "target_budget_per_1000": 10,
+          "selected_threshold": 0.5113,
+          "validation_performance": {
+            "threshold": 0.5113,
+            "precision": 0.1245,
+            "recall": 0.1233,
+            "f1": 0.1239,
+            "specificity": 0.9911,
+            "false_positive_rate": 0.0089,
+            "confusion_matrix": {
+              "true_positive": 101,
+              "false_positive": 710,
+              "false_negative": 718,
+              "true_negative": 79495
+            },
+            "alerts_per_1000": 10.01,
+            "total_samples": 81024
+          },
+          "test_performance": {
+            "threshold": 0.5113,
+            "precision": 0.1638,
+            "recall": 0.141,
+            "f1": 0.1516,
+            "specificity": 0.9927,
+            "false_positive_rate": 0.0073,
+            "confusion_matrix": {
+              "true_positive": 77,
+              "false_positive": 393,
+              "false_negative": 469,
+              "true_negative": 53211
+            },
+            "alerts_per_1000": 8.68,
+            "total_samples": 54150
+          }
+        },
+        "budget_25_per_1000": {
+          "target_budget_per_1000": 25,
+          "selected_threshold": 0.3499,
+          "validation_performance": {
+            "threshold": 0.3499,
+            "precision": 0.078,
+            "recall": 0.1929,
+            "f1": 0.1111,
+            "specificity": 0.9767,
+            "false_positive_rate": 0.0233,
+            "confusion_matrix": {
+              "true_positive": 158,
+              "false_positive": 1868,
+              "false_negative": 661,
+              "true_negative": 78337
+            },
+            "alerts_per_1000": 25.0,
+            "total_samples": 81024
+          },
+          "test_performance": {
+            "threshold": 0.3499,
+            "precision": 0.0888,
+            "recall": 0.2088,
+            "f1": 0.1246,
+            "specificity": 0.9782,
+            "false_positive_rate": 0.0218,
+            "confusion_matrix": {
+              "true_positive": 114,
+              "false_positive": 1170,
+              "false_negative": 432,
+              "true_negative": 52434
+            },
+            "alerts_per_1000": 23.71,
+            "total_samples": 54150
+          }
+        },
+        "budget_50_per_1000": {
+          "target_budget_per_1000": 50,
+          "selected_threshold": 0.2668,
+          "validation_performance": {
+            "threshold": 0.2668,
+            "precision": 0.0513,
+            "recall": 0.254,
+            "f1": 0.0854,
+            "specificity": 0.9521,
+            "false_positive_rate": 0.0479,
+            "confusion_matrix": {
+              "true_positive": 208,
+              "false_positive": 3844,
+              "false_negative": 611,
+              "true_negative": 76361
+            },
+            "alerts_per_1000": 50.01,
+            "total_samples": 81024
+          },
+          "test_performance": {
+            "threshold": 0.2668,
+            "precision": 0.0528,
+            "recall": 0.2582,
+            "f1": 0.0876,
+            "specificity": 0.9528,
+            "false_positive_rate": 0.0472,
+            "confusion_matrix": {
+              "true_positive": 141,
+              "false_positive": 2531,
+              "false_negative": 405,
+              "true_negative": 51073
+            },
+            "alerts_per_1000": 49.34,
+            "total_samples": 54150
+          }
+        }
+      }
+    },
+    "calibration_evaluation": {
+      "task_name": "Task C2 Operational Landmark",
+      "calibration_method": "isotonic",
+      "brier_score_uncalibrated": 0.028316,
+      "brier_score_calibrated": 0.009617,
+      "brier_score_reduction_pct": 66.04,
+      "ece_uncalibrated": 0.1181,
+      "ece_calibrated": 0.0003,
+      "mce_uncalibrated": 0.6198,
+      "mce_calibrated": 0.375,
+      "mean_prob_uncalibrated": 0.1282,
+      "mean_prob_calibrated": 0.0101,
+      "true_test_prevalence": 0.0101,
+      "quantile_calibration_bins_calibrated": [
+        {
+          "bin_range": [
+            0.0,
+            0.1
+          ],
+          "sample_size": 53998,
+          "mean_confidence": 0.0094,
+          "empirical_accuracy": 0.0093,
+          "calibration_error": 0.0001
+        },
+        {
+          "bin_range": [
+            0.1,
+            0.2
+          ],
+          "sample_size": 92,
+          "mean_confidence": 0.1644,
+          "empirical_accuracy": 0.1848,
+          "calibration_error": 0.0204
+        },
+        {
+          "bin_range": [
+            0.2,
+            0.3
+          ],
+          "sample_size": 30,
+          "mean_confidence": 0.281,
+          "empirical_accuracy": 0.4,
+          "calibration_error": 0.119
+        },
+        {
+          "bin_range": [
+            0.3,
+            0.4
+          ],
+          "sample_size": 10,
+          "mean_confidence": 0.3149,
+          "empirical_accuracy": 0.4,
+          "calibration_error": 0.0851
+        },
+        {
+          "bin_range": [
+            0.4,
+            0.5
+          ],
+          "sample_size": 6,
+          "mean_confidence": 0.4469,
+          "empirical_accuracy": 0.3333,
+          "calibration_error": 0.1136
+        },
+        {
+          "bin_range": [
+            0.5,
+            0.6
+          ],
+          "sample_size": 9,
+          "mean_confidence": 0.5,
+          "empirical_accuracy": 0.5556,
+          "calibration_error": 0.0556
+        },
+        {
+          "bin_range": [
+            0.6,
+            0.7
+          ],
+          "sample_size": 5,
+          "mean_confidence": 0.625,
+          "empirical_accuracy": 1.0,
+          "calibration_error": 0.375
+        }
+      ]
+    }
+  },
+  "decision_matrix": [
+    {
+      "task": "Task A: Delivery Duration (ETA)",
+      "phase_2_3_baseline": "LightGBM Point Regressor (MAE: 9.38m, RMSE: 12.77m)",
+      "phase_2_5_candidate": "LightGBM Quantile Regressors (P10, P50, P90)",
+      "validation_performance": "P50 Pinball: 4.5814 | 80% Coverage: 78.6%",
+      "test_performance": "P50 MAE: 9.163m | 80% Coverage: 78.6% | Mean Width: 27.92m",
+      "governance_classification": "APPROVED_FOR_SIMULATION",
+      "operational_recommendation": "Deploy P10-P90 conditional intervals for operations simulation and customer communication. Point predictions must not be presented without intervals. Long-tail (>50 min) orders still suffer from unobserved kitchen delays; ETA + 15m rule remains unvalidated."
+    },
+    {
+      "task": "Task B: Allocation Delay Risk (>3m)",
+      "phase_2_3_baseline": "LightGBM Classifier (Val PR-AUC: 0.0698, Test PR-AUC: 0.0728, 581 alerts/1k)",
+      "phase_2_5_candidate": "LightGBM Optuna Tuned (Val PR-AUC: 0.0706, Test PR-AUC: 0.0729)",
+      "validation_performance": "Val PR-AUC: 0.0706",
+      "test_performance": "Test PR-AUC: 0.0729 | Budget 10/1k: Prec 11.7%, Rec 3.8%",
+      "governance_classification": "NOT_APPROVED",
+      "operational_recommendation": "NOT APPROVED for standalone alerts or operational alarms. At 10 alerts/1k budget, recall is only 3.9%. At max F1, 58% of volume is flagged with 93% false alarms. Downstream batching utility remains an untested experimental hypothesis requiring comparative simulation."
+    },
+    {
+      "task": "Task C1: Upfront Cancellation Risk",
+      "phase_2_3_baseline": "Logistic Regression / LightGBM (Val PR-AUC: 0.0134, Test PR-AUC: 0.0152 / 0.0207)",
+      "phase_2_5_candidate": "LightGBM Optuna Tuned (Val PR-AUC: 0.0141, Test PR-AUC: 0.0133)",
+      "validation_performance": "Val PR-AUC: 0.0141 (Prior: 1.10%)",
+      "test_performance": "Test PR-AUC: 0.0133 (Prior: 1.11%)",
+      "governance_classification": "RESEARCH_ONLY",
+      "operational_recommendation": "RESEARCH ONLY. Static order-time coordinates and temporal features cannot predict cancellation prior to kitchen prep and courier dispatch. Model provides zero actionable separation above the base rate prior. Retain baseline."
+    },
+    {
+      "task": "Task C2: Landmark Cancellation Risk",
+      "phase_2_3_baseline": "LightGBM (Val PR-AUC: 0.0550, Test PR-AUC: 0.0727, Prec: 24.32%, Rec: 11.54%)",
+      "phase_2_5_candidate": "LightGBM Tuned + Isotonic (Val PR-AUC: 0.0595, Test PR-AUC: 0.0829)",
+      "validation_performance": "Val PR-AUC: 0.0595 | Brier Reduction: 66.04%",
+      "test_performance": "Test PR-AUC: 0.0829 | Budget 5/1k: Prec 25.0%, Rec 10.1% | Budget 10/1k: Prec 16.4%, Rec 14.1%",
+      "governance_classification": "APPROVED_FOR_CONTROLLED_TRIAGE",
+      "operational_recommendation": "APPROVED FOR CONTROLLED TRIAGE under strict 5-to-10 alerts per 1,000 budget. Intercepts 58 to 82 post-landmark cancellations with 17.5% - 27.1% precision (17x - 27x lift). Interventions must be non-intrusive (monitoring only; no automated cancellation refunds). Target is eventual post-landmark cancellation, not fixed-horizon or imminent cancellation."
+    }
+  ]
+}

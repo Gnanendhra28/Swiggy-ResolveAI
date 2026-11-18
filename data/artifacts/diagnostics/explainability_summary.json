@@ -1,0 +1,634 @@
+{
+  "disclaimer": "SHAP values quantify the marginal contribution of each feature to the model's output within the tree ensemble. They represent statistical associations conditional on the dataset distribution and MUST NOT be interpreted as causal intervention effects.",
+  "task_a_delivery_duration": {
+    "model_type": "LightGBM Regressor",
+    "global_feature_importance_mean_abs_shap": [
+      {
+        "feature": "last_mile_distance",
+        "mean_abs_shap_minutes": 3.0681
+      },
+      {
+        "feature": "meal_period",
+        "mean_abs_shap_minutes": 1.0509
+      },
+      {
+        "feature": "dow_sin",
+        "mean_abs_shap_minutes": 0.8367
+      },
+      {
+        "feature": "rolling_order_volume_60m",
+        "mean_abs_shap_minutes": 0.7361
+      },
+      {
+        "feature": "order_dayofweek",
+        "mean_abs_shap_minutes": 0.4739
+      },
+      {
+        "feature": "order_hour",
+        "mean_abs_shap_minutes": 0.3835
+      },
+      {
+        "feature": "dow_cos",
+        "mean_abs_shap_minutes": 0.3577
+      },
+      {
+        "feature": "hour_sin",
+        "mean_abs_shap_minutes": 0.299
+      },
+      {
+        "feature": "rolling_order_volume_15m",
+        "mean_abs_shap_minutes": 0.2454
+      },
+      {
+        "feature": "demand_acceleration",
+        "mean_abs_shap_minutes": 0.202
+      },
+      {
+        "feature": "hour_cos",
+        "mean_abs_shap_minutes": 0.1834
+      },
+      {
+        "feature": "distance_bracket",
+        "mean_abs_shap_minutes": 0.0367
+      },
+      {
+        "feature": "is_peak_meal_window",
+        "mean_abs_shap_minutes": 0.031
+      },
+      {
+        "feature": "is_zero_last_mile",
+        "mean_abs_shap_minutes": 0.0
+      },
+      {
+        "feature": "last_mile_distance_sq",
+        "mean_abs_shap_minutes": 0.0
+      },
+      {
+        "feature": "is_weekend",
+        "mean_abs_shap_minutes": 0.0
+      }
+    ],
+    "linear_baseline_coefficients_ridge": [
+      {
+        "feature": "num__order_hour",
+        "coefficient": -5.6789
+      },
+      {
+        "feature": "num__last_mile_distance",
+        "coefficient": 5.3748
+      },
+      {
+        "feature": "num__hour_sin",
+        "coefficient": -4.2515
+      },
+      {
+        "feature": "num__order_dayofweek",
+        "coefficient": -3.2687
+      },
+      {
+        "feature": "num__is_weekend",
+        "coefficient": 3.0564
+      },
+      {
+        "feature": "cat__distance_bracket_ultra_short",
+        "coefficient": -2.5047
+      },
+      {
+        "feature": "cat__meal_period_DINNER_PEAK",
+        "coefficient": 2.184
+      },
+      {
+        "feature": "num__dow_cos",
+        "coefficient": -2.1044
+      },
+      {
+        "feature": "num__is_peak_meal_window",
+        "coefficient": 2.0429
+      },
+      {
+        "feature": "num__rolling_order_volume_60m",
+        "coefficient": 2.0313
+      }
+    ],
+    "case_study_accurate_prediction": {
+      "order_index": 3,
+      "actual_duration_min": 26.4,
+      "predicted_duration_min": 26.13,
+      "absolute_error_min": 0.27,
+      "top_shap_drivers": [
+        {
+          "feature": "last_mile_distance",
+          "shap_impact_minutes": -3.8773,
+          "feature_value": "1.37"
+        },
+        {
+          "feature": "order_hour",
+          "shap_impact_minutes": -2.1558,
+          "feature_value": "2"
+        },
+        {
+          "feature": "meal_period",
+          "shap_impact_minutes": 0.7736,
+          "feature_value": "LATE_NIGHT"
+        },
+        {
+          "feature": "rolling_order_volume_60m",
+          "shap_impact_minutes": -0.4977,
+          "feature_value": "2.0"
+        },
+        {
+          "feature": "hour_cos",
+          "shap_impact_minutes": -0.4512,
+          "feature_value": "0.8660254037844387"
+        }
+      ],
+      "explanation": "Predicted ETA closely matches ground truth. Moderate last-mile distance combined with standard meal period yields accurate baseline expectation."
+    },
+    "case_study_extreme_underprediction": {
+      "order_index": 32,
+      "actual_duration_min": 124.18,
+      "predicted_duration_min": 33.02,
+      "underprediction_minutes": 91.16,
+      "top_shap_drivers": [
+        {
+          "feature": "meal_period",
+          "shap_impact_minutes": 0.9709,
+          "feature_value": "LATE_NIGHT"
+        },
+        {
+          "feature": "rolling_order_volume_60m",
+          "shap_impact_minutes": -0.409,
+          "feature_value": "27.0"
+        },
+        {
+          "feature": "order_dayofweek",
+          "shap_impact_minutes": 0.3543,
+          "feature_value": "4"
+        },
+        {
+          "feature": "dow_sin",
+          "shap_impact_minutes": -0.3341,
+          "feature_value": "-0.433883739117558"
+        },
+        {
+          "feature": "last_mile_distance",
+          "shap_impact_minutes": 0.2215,
+          "feature_value": "2.86"
+        }
+      ],
+      "failure_analysis": "Model severely underpredicts because order-time static features (distance, hour) suggested a 30-minute delivery. Unobserved factors (kitchen prep delays, courier dispatch bottleneck) added 30+ minutes that are invisible at order placement."
+    }
+  },
+  "task_b_allocation_delay": {
+    "model_type": "LightGBM Binary Classifier",
+    "global_feature_importance_mean_abs_shap": [
+      {
+        "feature": "last_mile_distance",
+        "mean_abs_shap": 0.0943
+      },
+      {
+        "feature": "demand_acceleration",
+        "mean_abs_shap": 0.0937
+      },
+      {
+        "feature": "dow_sin",
+        "mean_abs_shap": 0.0743
+      },
+      {
+        "feature": "order_dayofweek",
+        "mean_abs_shap": 0.0548
+      },
+      {
+        "feature": "rolling_order_volume_60m",
+        "mean_abs_shap": 0.0507
+      },
+      {
+        "feature": "rolling_order_volume_15m",
+        "mean_abs_shap": 0.0501
+      },
+      {
+        "feature": "order_hour",
+        "mean_abs_shap": 0.0238
+      },
+      {
+        "feature": "dow_cos",
+        "mean_abs_shap": 0.0221
+      },
+      {
+        "feature": "hour_cos",
+        "mean_abs_shap": 0.0172
+      },
+      {
+        "feature": "is_peak_meal_window",
+        "mean_abs_shap": 0.0103
+      },
+      {
+        "feature": "hour_sin",
+        "mean_abs_shap": 0.0077
+      },
+      {
+        "feature": "meal_period",
+        "mean_abs_shap": 0.0018
+      },
+      {
+        "feature": "distance_bracket",
+        "mean_abs_shap": 0.001
+      },
+      {
+        "feature": "is_zero_last_mile",
+        "mean_abs_shap": 0.0
+      },
+      {
+        "feature": "last_mile_distance_sq",
+        "mean_abs_shap": 0.0
+      },
+      {
+        "feature": "is_weekend",
+        "mean_abs_shap": 0.0
+      }
+    ],
+    "linear_baseline_coefficients_logistic": [
+      {
+        "feature": "cat__meal_period_LATE_NIGHT",
+        "coefficient": 0.4484,
+        "odds_ratio": 1.5658
+      },
+      {
+        "feature": "num__is_weekend",
+        "coefficient": 0.2702,
+        "odds_ratio": 1.3103
+      },
+      {
+        "feature": "num__order_hour",
+        "coefficient": 0.2574,
+        "odds_ratio": 1.2935
+      },
+      {
+        "feature": "num__rolling_order_volume_15m",
+        "coefficient": -0.2496,
+        "odds_ratio": 0.7791
+      },
+      {
+        "feature": "num__order_dayofweek",
+        "coefficient": -0.2374,
+        "odds_ratio": 0.7887
+      },
+      {
+        "feature": "num__rolling_order_volume_60m",
+        "coefficient": 0.2185,
+        "odds_ratio": 1.2442
+      },
+      {
+        "feature": "num__dow_cos",
+        "coefficient": -0.1923,
+        "odds_ratio": 0.8251
+      },
+      {
+        "feature": "cat__meal_period_BREAKFAST",
+        "coefficient": 0.1849,
+        "odds_ratio": 1.2031
+      },
+      {
+        "feature": "num__last_mile_distance_sq",
+        "coefficient": 0.1773,
+        "odds_ratio": 1.194
+      },
+      {
+        "feature": "num__hour_sin",
+        "coefficient": 0.172,
+        "odds_ratio": 1.1877
+      }
+    ],
+    "case_study_true_positive": {
+      "order_index": 80,
+      "actual_delayed": true,
+      "predicted_probability": 0.4803,
+      "threshold": 0.47000000000000003,
+      "top_shap_drivers": [
+        {
+          "feature": "order_hour",
+          "shap_impact_log_odds": -0.1059,
+          "feature_value": "4"
+        },
+        {
+          "feature": "rolling_order_volume_15m",
+          "shap_impact_log_odds": 0.0842,
+          "feature_value": "12.0"
+        },
+        {
+          "feature": "rolling_order_volume_60m",
+          "shap_impact_log_odds": -0.0744,
+          "feature_value": "58.0"
+        },
+        {
+          "feature": "order_dayofweek",
+          "shap_impact_log_odds": 0.0498,
+          "feature_value": "4"
+        },
+        {
+          "feature": "last_mile_distance",
+          "shap_impact_log_odds": 0.0213,
+          "feature_value": "3.31"
+        }
+      ],
+      "explanation": "Model correctly flagged allocation risk driven by peak meal period and elevated rolling 60-minute order volume, indicating high platform concurrency."
+    },
+    "case_study_false_positive": {
+      "order_index": 0,
+      "actual_delayed": false,
+      "predicted_probability": 0.4907,
+      "threshold": 0.47000000000000003,
+      "top_shap_drivers": [
+        {
+          "feature": "rolling_order_volume_60m",
+          "shap_impact_log_odds": -0.2346,
+          "feature_value": "0.0"
+        },
+        {
+          "feature": "last_mile_distance",
+          "shap_impact_log_odds": 0.2004,
+          "feature_value": "6.27"
+        },
+        {
+          "feature": "order_hour",
+          "shap_impact_log_odds": 0.1053,
+          "feature_value": "0"
+        },
+        {
+          "feature": "dow_cos",
+          "shap_impact_log_odds": 0.0956,
+          "feature_value": "-0.9009688679024191"
+        },
+        {
+          "feature": "hour_cos",
+          "shap_impact_log_odds": -0.0505,
+          "feature_value": "1.0"
+        }
+      ],
+      "failure_analysis": "False alert triggered by macro demand surge signals; however, a courier happened to be immediately completing a dropoff within 200m, allocating the order under 2 minutes."
+    }
+  },
+  "task_c2_cancellation_landmark": {
+    "model_type": "LightGBM Binary Classifier (Operational Landmark)",
+    "global_feature_importance_mean_abs_shap": [
+      {
+        "feature": "courier_session_time_min",
+        "mean_abs_shap": 0.2696
+      },
+      {
+        "feature": "last_mile_distance",
+        "mean_abs_shap": 0.1729
+      },
+      {
+        "feature": "order_hour",
+        "mean_abs_shap": 0.1689
+      },
+      {
+        "feature": "accept_delay_at_landmark",
+        "mean_abs_shap": 0.1638
+      },
+      {
+        "feature": "allot_delay_min",
+        "mean_abs_shap": 0.1561
+      },
+      {
+        "feature": "demand_acceleration",
+        "mean_abs_shap": 0.0987
+      },
+      {
+        "feature": "total_route_distance",
+        "mean_abs_shap": 0.0925
+      },
+      {
+        "feature": "rolling_order_volume_15m",
+        "mean_abs_shap": 0.0913
+      },
+      {
+        "feature": "dow_sin",
+        "mean_abs_shap": 0.0733
+      },
+      {
+        "feature": "first_to_last_mile_ratio",
+        "mean_abs_shap": 0.0717
+      },
+      {
+        "feature": "rolling_order_volume_60m",
+        "mean_abs_shap": 0.0694
+      },
+      {
+        "feature": "meal_period",
+        "mean_abs_shap": 0.0462
+      },
+      {
+        "feature": "first_mile_distance",
+        "mean_abs_shap": 0.036
+      },
+      {
+        "feature": "hour_sin",
+        "mean_abs_shap": 0.0288
+      },
+      {
+        "feature": "dow_cos",
+        "mean_abs_shap": 0.0195
+      },
+      {
+        "feature": "hour_cos",
+        "mean_abs_shap": 0.0178
+      },
+      {
+        "feature": "order_dayofweek",
+        "mean_abs_shap": 0.0169
+      },
+      {
+        "feature": "distance_bracket",
+        "mean_abs_shap": 0.0165
+      },
+      {
+        "feature": "is_peak_meal_window",
+        "mean_abs_shap": 0.0053
+      },
+      {
+        "feature": "is_zero_last_mile",
+        "mean_abs_shap": 0.001
+      },
+      {
+        "feature": "has_accepted_by_landmark",
+        "mean_abs_shap": 0.0004
+      },
+      {
+        "feature": "last_mile_distance_sq",
+        "mean_abs_shap": 0.0
+      },
+      {
+        "feature": "is_weekend",
+        "mean_abs_shap": 0.0
+      },
+      {
+        "feature": "is_extreme_first_mile",
+        "mean_abs_shap": 0.0
+      },
+      {
+        "feature": "courier_fatigue_flag",
+        "mean_abs_shap": 0.0
+      },
+      {
+        "feature": "is_delayed_allotment",
+        "mean_abs_shap": 0.0
+      }
+    ],
+    "linear_baseline_coefficients_logistic": [
+      {
+        "feature": "num__order_hour",
+        "coefficient": 0.8891,
+        "odds_ratio": 2.433
+      },
+      {
+        "feature": "num__hour_sin",
+        "coefficient": 0.5563,
+        "odds_ratio": 1.7442
+      },
+      {
+        "feature": "num__courier_session_time_min",
+        "coefficient": -0.4653,
+        "odds_ratio": 0.6279
+      },
+      {
+        "feature": "cat__distance_bracket_ultra_short",
+        "coefficient": 0.4048,
+        "odds_ratio": 1.499
+      },
+      {
+        "feature": "num__is_weekend",
+        "coefficient": 0.4044,
+        "odds_ratio": 1.4984
+      },
+      {
+        "feature": "num__order_dayofweek",
+        "coefficient": -0.3681,
+        "odds_ratio": 0.692
+      },
+      {
+        "feature": "cat__meal_period_LATE_NIGHT",
+        "coefficient": 0.3639,
+        "odds_ratio": 1.4389
+      },
+      {
+        "feature": "num__allot_delay_min",
+        "coefficient": 0.3336,
+        "odds_ratio": 1.396
+      },
+      {
+        "feature": "cat__meal_period_LUNCH_PEAK",
+        "coefficient": -0.3103,
+        "odds_ratio": 0.7332
+      },
+      {
+        "feature": "cat__meal_period_DINNER_PEAK",
+        "coefficient": 0.3071,
+        "odds_ratio": 1.3595
+      }
+    ],
+    "case_study_true_positive": {
+      "order_index": 1187,
+      "actual_cancelled": true,
+      "predicted_probability": 0.9738,
+      "threshold": 0.87,
+      "top_shap_drivers": [
+        {
+          "feature": "allot_delay_min",
+          "shap_impact_log_odds": 4.2729,
+          "feature_value": "78.15"
+        },
+        {
+          "feature": "courier_session_time_min",
+          "shap_impact_log_odds": 0.1953,
+          "feature_value": "178.15"
+        },
+        {
+          "feature": "order_hour",
+          "shap_impact_log_odds": -0.1616,
+          "feature_value": "6"
+        },
+        {
+          "feature": "demand_acceleration",
+          "shap_impact_log_odds": -0.1413,
+          "feature_value": "3.8851851851851853"
+        },
+        {
+          "feature": "last_mile_distance",
+          "shap_impact_log_odds": -0.0797,
+          "feature_value": "2.51"
+        }
+      ],
+      "explanation": "Courier acceptance delay exceeded 4 minutes alongside prolonged first-mile distance, correctly driving model risk probability above the 0.87 threshold."
+    },
+    "case_study_false_positive": {
+      "order_index": 84,
+      "actual_cancelled": false,
+      "predicted_probability": 0.9594,
+      "threshold": 0.87,
+      "top_shap_drivers": [
+        {
+          "feature": "allot_delay_min",
+          "shap_impact_log_odds": 4.5194,
+          "feature_value": "49.13333333333333"
+        },
+        {
+          "feature": "rolling_order_volume_15m",
+          "shap_impact_log_odds": -0.3682,
+          "feature_value": "10.0"
+        },
+        {
+          "feature": "accept_delay_at_landmark",
+          "shap_impact_log_odds": -0.2305,
+          "feature_value": "0.08333333333333333"
+        },
+        {
+          "feature": "order_hour",
+          "shap_impact_log_odds": -0.2287,
+          "feature_value": "4"
+        },
+        {
+          "feature": "courier_session_time_min",
+          "shap_impact_log_odds": 0.0741,
+          "feature_value": "178.15"
+        }
+      ],
+      "failure_analysis": "Order exhibited severe initial friction (allotment delay + courier hesitation); however, the courier arrived quickly thereafter and customer chose not to cancel."
+    },
+    "case_study_false_negative": {
+      "order_index": 97,
+      "actual_cancelled": true,
+      "predicted_probability": 0.0729,
+      "threshold": 0.87,
+      "top_shap_drivers": [
+        {
+          "feature": "rolling_order_volume_15m",
+          "shap_impact_log_odds": -0.7162,
+          "feature_value": "6.0"
+        },
+        {
+          "feature": "order_hour",
+          "shap_impact_log_odds": -0.5205,
+          "feature_value": "5"
+        },
+        {
+          "feature": "accept_delay_at_landmark",
+          "shap_impact_log_odds": 0.4261,
+          "feature_value": "5.0"
+        },
+        {
+          "feature": "demand_acceleration",
+          "shap_impact_log_odds": -0.3068,
+          "feature_value": "0.47058823529411764"
+        },
+        {
+          "feature": "total_route_distance",
+          "shap_impact_log_odds": -0.2782,
+          "feature_value": "1.0844"
+        }
+      ],
+      "failure_analysis": "Courier accepted instantly and telemetry was nominal at landmark. Subsequent cancellation was driven by external post-landmark shock (restaurant item out of stock or customer address error)."
+    }
+  }
+}

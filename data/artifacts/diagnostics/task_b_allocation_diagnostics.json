@@ -1,0 +1,141 @@
+{
+  "task_name": "Task B: Rider Allocation Delay Risk (>3 min)",
+  "target_definition": "allot_time - order_time > 3.0 minutes",
+  "telemetry_note": "allot_time represents recorded final courier allotment, which for reassigned orders logs the second courier allotment after repushing to auto-allocation pool.",
+  "operational_status": {
+    "approved_for_standalone_alerts": false,
+    "selected_threshold": 0.47000000000000003,
+    "alert_rate_per_1000": 580.97,
+    "downstream_batching_usage": "HYPOTHESIS_REQUIRING_EVALUATION",
+    "warning": "High alert volume (58.1% of orders flagged) prevents use as standalone alerting without overwhelming operators."
+  },
+  "test_sample_size": 54221,
+  "test_positive_prevalence": 6.17,
+  "test_metrics_at_selected_threshold": {
+    "pr_auc": 0.0728,
+    "roc_auc": 0.5415,
+    "brier_score": 0.238267,
+    "positive_class_prevalence": 0.0617,
+    "threshold": 0.47,
+    "precision": 0.0664,
+    "recall": 0.6259,
+    "f1": 0.1201,
+    "confusion_matrix": {
+      "true_negative": 21469,
+      "false_positive": 29408,
+      "false_negative": 1251,
+      "true_positive": 2093
+    },
+    "sample_size": 54221,
+    "specificity": 0.422,
+    "false_positive_rate": 0.578,
+    "alerts_per_100_orders": 58.1,
+    "alerts_per_1000_orders": 580.97,
+    "lift_over_prevalence": 1.08
+  },
+  "test_metrics_at_default_threshold": {
+    "pr_auc": 0.0728,
+    "roc_auc": 0.5415,
+    "brier_score": 0.238267,
+    "positive_class_prevalence": 0.0617,
+    "threshold": 0.5,
+    "precision": 0.0703,
+    "recall": 0.3711,
+    "f1": 0.1182,
+    "confusion_matrix": {
+      "true_negative": 34455,
+      "false_positive": 16422,
+      "false_negative": 2103,
+      "true_positive": 1241
+    },
+    "sample_size": 54221,
+    "specificity": 0.6772,
+    "false_positive_rate": 0.3228,
+    "alerts_per_100_orders": 32.58,
+    "alerts_per_1000_orders": 325.76,
+    "lift_over_prevalence": 1.14
+  },
+  "validation_threshold_tradeoffs": [
+    {
+      "threshold": 0.1,
+      "precision": 0.0576,
+      "recall": 1.0,
+      "f1": 0.109,
+      "specificity": 0.0,
+      "false_positive_rate": 1.0,
+      "alerts_per_1000": 999.99
+    },
+    {
+      "threshold": 0.2,
+      "precision": 0.0577,
+      "recall": 0.9998,
+      "f1": 0.1091,
+      "specificity": 0.0007,
+      "false_positive_rate": 0.9993,
+      "alerts_per_1000": 999.35
+    },
+    {
+      "threshold": 0.3,
+      "precision": 0.058,
+      "recall": 0.9895,
+      "f1": 0.1096,
+      "specificity": 0.0171,
+      "false_positive_rate": 0.9829,
+      "alerts_per_1000": 983.29
+    },
+    {
+      "threshold": 0.4,
+      "precision": 0.0598,
+      "recall": 0.9166,
+      "f1": 0.1122,
+      "specificity": 0.1181,
+      "false_positive_rate": 0.8819,
+      "alerts_per_1000": 883.91
+    },
+    {
+      "threshold": 0.47,
+      "precision": 0.0638,
+      "recall": 0.6036,
+      "f1": 0.1154,
+      "specificity": 0.4579,
+      "false_positive_rate": 0.5421,
+      "alerts_per_1000": 545.64
+    },
+    {
+      "threshold": 0.5,
+      "precision": 0.0719,
+      "recall": 0.285,
+      "f1": 0.1148,
+      "specificity": 0.7749,
+      "false_positive_rate": 0.2251,
+      "alerts_per_1000": 228.57
+    },
+    {
+      "threshold": 0.6,
+      "precision": 0.0972,
+      "recall": 0.0438,
+      "f1": 0.0604,
+      "specificity": 0.9751,
+      "false_positive_rate": 0.0249,
+      "alerts_per_1000": 25.98
+    },
+    {
+      "threshold": 0.7,
+      "precision": 0.0814,
+      "recall": 0.0128,
+      "f1": 0.0222,
+      "specificity": 0.9911,
+      "false_positive_rate": 0.0089,
+      "alerts_per_1000": 9.08
+    },
+    {
+      "threshold": 0.8,
+      "precision": 0.5714,
+      "recall": 0.0009,
+      "f1": 0.0017,
+      "specificity": 1.0,
+      "false_positive_rate": 0.0,
+      "alerts_per_1000": 0.09
+    }
+  ]
+}

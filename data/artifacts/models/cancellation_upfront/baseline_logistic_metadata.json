@@ -1,0 +1,140 @@
+{
+  "task_name": "cancellation_upfront",
+  "task_type": "BINARY_CLASSIFICATION",
+  "selected_model": "lightgbm",
+  "target_column": "target_is_cancelled",
+  "feature_columns": [
+    "last_mile_distance",
+    "is_zero_last_mile",
+    "last_mile_distance_sq",
+    "distance_bracket",
+    "order_hour",
+    "hour_sin",
+    "hour_cos",
+    "order_dayofweek",
+    "dow_sin",
+    "dow_cos",
+    "is_weekend",
+    "meal_period",
+    "is_peak_meal_window",
+    "rolling_order_volume_15m",
+    "rolling_order_volume_60m",
+    "demand_acceleration"
+  ],
+  "categorical_columns": [
+    "distance_bracket",
+    "meal_period"
+  ],
+  "selected_threshold": 0.61,
+  "validation_comparison": {
+    "dummy_stratified": {
+      "pr_auc": 0.011,
+      "roc_auc": 0.4979,
+      "brier_score": 0.022765,
+      "positive_class_prevalence": 0.011,
+      "threshold": 0.5,
+      "precision": 0.0072,
+      "recall": 0.0078,
+      "f1": 0.0075,
+      "confusion_matrix": {
+        "true_negative": 79278,
+        "false_positive": 960,
+        "false_negative": 887,
+        "true_positive": 7
+      },
+      "sample_size": 81132
+    },
+    "logistic_regression": {
+      "pr_auc": 0.0134,
+      "roc_auc": 0.5368,
+      "brier_score": 0.248667,
+      "positive_class_prevalence": 0.011,
+      "threshold": 0.5,
+      "precision": 0.0122,
+      "recall": 0.4866,
+      "f1": 0.0238,
+      "confusion_matrix": {
+        "true_negative": 45029,
+        "false_positive": 35209,
+        "false_negative": 459,
+        "true_positive": 435
+      },
+      "sample_size": 81132
+    },
+    "lightgbm": {
+      "pr_auc": 0.0123,
+      "roc_auc": 0.5229,
+      "brier_score": 0.209159,
+      "positive_class_prevalence": 0.011,
+      "threshold": 0.5,
+      "precision": 0.0126,
+      "recall": 0.3233,
+      "f1": 0.0242,
+      "confusion_matrix": {
+        "true_negative": 57551,
+        "false_positive": 22687,
+        "false_negative": 605,
+        "true_positive": 289
+      },
+      "sample_size": 81132
+    }
+  },
+  "validation_optimal_threshold_eval": {
+    "pr_auc": 0.0123,
+    "roc_auc": 0.5229,
+    "brier_score": 0.209159,
+    "positive_class_prevalence": 0.011,
+    "threshold": 0.61,
+    "precision": 0.0161,
+    "recall": 0.0716,
+    "f1": 0.0263,
+    "confusion_matrix": {
+      "true_negative": 76325,
+      "false_positive": 3913,
+      "false_negative": 830,
+      "true_positive": 64
+    },
+    "sample_size": 81132
+  },
+  "test_evaluation_default_threshold": {
+    "pr_auc": 0.0207,
+    "roc_auc": 0.5546,
+    "brier_score": 0.201493,
+    "positive_class_prevalence": 0.0111,
+    "threshold": 0.5,
+    "precision": 0.0142,
+    "recall": 0.2919,
+    "f1": 0.0272,
+    "confusion_matrix": {
+      "true_negative": 41438,
+      "false_positive": 12180,
+      "false_negative": 427,
+      "true_positive": 176
+    },
+    "sample_size": 54221
+  },
+  "test_evaluation_selected_threshold": {
+    "pr_auc": 0.0207,
+    "roc_auc": 0.5546,
+    "brier_score": 0.201493,
+    "positive_class_prevalence": 0.0111,
+    "threshold": 0.61,
+    "precision": 0.0195,
+    "recall": 0.1095,
+    "f1": 0.033,
+    "confusion_matrix": {
+      "true_negative": 50291,
+      "false_positive": 3327,
+      "false_negative": 537,
+      "true_positive": 66
+    },
+    "sample_size": 54221
+  },
+  "split_sample_sizes": {
+    "train": 314646,
+    "validation": 81132,
+    "test": 54221
+  },
+  "artifact_path": "data/artifacts/models\\cancellation_upfront\\baseline_logistic.joblib",
+  "saved_at": "2026-11-18T11:33:50.126682+00:00"
+}

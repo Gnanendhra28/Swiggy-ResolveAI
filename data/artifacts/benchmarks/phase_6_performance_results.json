@@ -1,0 +1,71 @@
+{
+  "benchmark_timestamp": "2026-11-18T13:44:55.325732+00:00",
+  "environment": "Local Host (Windows 11, Python 3.12, SQLite / In-Memory Session)",
+  "results": [
+    {
+      "benchmark_name": "Health Liveness Probe",
+      "sample_count": 100,
+      "concurrency": 20,
+      "total_wall_sec": 0.38,
+      "throughput_rps": 265.9,
+      "median_latency_ms": 64.89,
+      "p90_latency_ms": 109.32,
+      "p95_latency_ms": 118.33,
+      "p99_latency_ms": 141.21,
+      "error_count": 0,
+      "error_rate_pct": 0.0
+    },
+    {
+      "benchmark_name": "Orders Query Pagination",
+      "sample_count": 50,
+      "concurrency": 10,
+      "total_wall_sec": 1.04,
+      "throughput_rps": 48.1,
+      "median_latency_ms": 186.62,
+      "p90_latency_ms": 263.35,
+      "p95_latency_ms": 269.43,
+      "p99_latency_ms": 283.74,
+      "error_count": 0,
+      "error_rate_pct": 0.0
+    },
+    {
+      "benchmark_name": "ML Inference (Tasks A & C2)",
+      "sample_count": 100,
+      "concurrency": 10,
+      "total_wall_sec": 3.54,
+      "throughput_rps": 28.2,
+      "median_latency_ms": 315.04,
+      "p90_latency_ms": 514.67,
+      "p95_latency_ms": 553.38,
+      "p99_latency_ms": 666.16,
+      "error_count": 0,
+      "error_rate_pct": 0.0
+    },
+    {
+      "benchmark_name": "Action Effectiveness Evaluation",
+      "sample_count": 20,
+      "concurrency": 5,
+      "total_wall_sec": 0.12,
+      "throughput_rps": 165.5,
+      "median_latency_ms": 29.3,
+      "p90_latency_ms": 34.26,
+      "p95_latency_ms": 37.04,
+      "p99_latency_ms": 37.78,
+      "error_count": 0,
+      "error_rate_pct": 0.0
+    },
+    {
+      "benchmark_name": "4-Strategy Counterfactual Batch Run",
+      "sample_count": 5,
+      "concurrency": 1,
+      "total_wall_sec": 2.61,
+      "throughput_rps": 1.9,
+      "median_latency_ms": 506.86,
+      "p90_latency_ms": 563.7,
+      "p95_latency_ms": 569.77,
+      "p99_latency_ms": 574.62,
+      "error_count": 0,
+      "error_rate_pct": 0.0
+    }
+  ]
+}

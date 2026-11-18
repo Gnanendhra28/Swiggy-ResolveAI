@@ -1,0 +1,116 @@
+name: CI Quality Gate & Release Governance
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # =========================================================================
+  # 1. Backend Quality Gate
+  # =========================================================================
+  backend-quality-gate:
+    name: Backend Lint, Test & Migration Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Backend Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install flake8 pytest pytest-cov
+
+      - name: Syntax & Formatting Verification (Flake8)
+        run: |
+          # Stop the build if there are Python syntax errors or undefined names
+          flake8 backend --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Warning check for complexity
+          flake8 backend --count --exit-zero --max-complexity=15 --max-line-length=120 --statistics
+
+      - name: Execute Alembic Migration Verification
+        run: |
+          pytest backend/tests/test_alembic.py -v
+
+      - name: Execute Backend Test Suite
+        env:
+          ENVIRONMENT: testing
+          DATABASE_URL: sqlite:///./test_ci.db
+        run: |
+          pytest backend/tests/ -v --junitxml=junit/test-results.xml
+
+  # =========================================================================
+  # 2. Frontend Quality Gate
+  # =========================================================================
+  frontend-quality-gate:
+    name: Frontend TypeScript, Lint & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        run: |
+          npm ci
+
+      - name: TypeScript Type Check
+        working-directory: ./frontend
+        run: |
+          npx tsc --noEmit
+
+      - name: Production Build Check
+        working-directory: ./frontend
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+          NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+        run: |
+          npm run build
+
+  # =========================================================================
+  # 3. Security, Secret Scanning & Docker Validation
+  # =========================================================================
+  security-and-docker-validation:
+    name: Security & Container Build Validation
+    runs-on: ubuntu-latest
+    needs: [backend-quality-gate, frontend-quality-gate]
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Scan for Secret Leaks & Committed Credentials
+        run: |
+          echo "Scanning for accidentally committed secret keys or credentials..."
+          # Fail if private keys or live API keys are found in tracked files
+          ! grep -rE "BEGIN (RSA|EC|DSA|OPENSSH) PRIVATE KEY" . --exclude-dir={.git,node_modules}
+          ! grep -rE "AIzaSy[A-Za-z0-9_-]{33}" . --exclude-dir={.git,node_modules}
+
+      - name: Validate Backend Docker Build
+        run: |
+          docker build -f backend/Dockerfile -t resolveai-backend:ci .
+
+      - name: Validate Frontend Docker Build
+        run: |
+          docker build -f frontend/Dockerfile -t resolveai-frontend:ci ./frontend

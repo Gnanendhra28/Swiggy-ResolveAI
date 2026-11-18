@@ -1,0 +1,211 @@
+{
+  "task_name": "delivery_duration",
+  "task_type": "REGRESSION",
+  "selected_model": "lightgbm",
+  "target_column": "target_delivery_duration_min",
+  "feature_columns": [
+    "last_mile_distance",
+    "is_zero_last_mile",
+    "last_mile_distance_sq",
+    "distance_bracket",
+    "order_hour",
+    "hour_sin",
+    "hour_cos",
+    "order_dayofweek",
+    "dow_sin",
+    "dow_cos",
+    "is_weekend",
+    "meal_period",
+    "is_peak_meal_window",
+    "rolling_order_volume_15m",
+    "rolling_order_volume_60m",
+    "demand_acceleration"
+  ],
+  "categorical_columns": [
+    "distance_bracket",
+    "meal_period"
+  ],
+  "validation_comparison": {
+    "dummy_median": {
+      "mae": 9.2303,
+      "rmse": 12.9069,
+      "r2": -0.0218,
+      "sample_size": 80184,
+      "absolute_error_percentiles": {
+        "p10": 1.31666666666667,
+        "p25": 3.4333333333333336,
+        "p50_median": 7.266666666666669,
+        "p75": 12.233333333333334,
+        "p90": 18.283333333333335,
+        "p95": 24.38333333333333,
+        "p99": 42.71666666666667
+      },
+      "performance_by_duration_range": {
+        "under_20min": {
+          "count": 13232,
+          "pct_of_total": 16.5,
+          "mae": 12.85,
+          "rmse": 13.14
+        },
+        "20_to_35min": {
+          "count": 42392,
+          "pct_of_total": 52.87,
+          "mae": 3.89,
+          "rmse": 4.63
+        },
+        "35_to_50min": {
+          "count": 18740,
+          "pct_of_total": 23.37,
+          "mae": 11.6,
+          "rmse": 12.31
+        },
+        "over_50min": {
+          "count": 5820,
+          "pct_of_total": 7.26,
+          "mae": 32.28,
+          "rmse": 35.47
+        }
+      }
+    },
+    "ridge_linear": {
+      "mae": 8.9271,
+      "rmse": 12.1603,
+      "r2": 0.093,
+      "sample_size": 80184,
+      "absolute_error_percentiles": {
+        "p10": 1.4146604755187273,
+        "p25": 3.598250492562821,
+        "p50_median": 7.37709980451797,
+        "p75": 12.017059266022512,
+        "p90": 16.878068035601817,
+        "p95": 21.50437212397769,
+        "p99": 39.301088154639466
+      },
+      "performance_by_duration_range": {
+        "under_20min": {
+          "count": 13232,
+          "pct_of_total": 16.5,
+          "mae": 12.3,
+          "rmse": 12.92
+        },
+        "20_to_35min": {
+          "count": 42392,
+          "pct_of_total": 52.87,
+          "mae": 5.57,
+          "rmse": 6.79
+        },
+        "35_to_50min": {
+          "count": 18740,
+          "pct_of_total": 23.37,
+          "mae": 8.22,
+          "rmse": 9.73
+        },
+        "over_50min": {
+          "count": 5820,
+          "pct_of_total": 7.26,
+          "mae": 27.97,
+          "rmse": 31.89
+        }
+      }
+    },
+    "lightgbm": {
+      "mae": 8.7763,
+      "rmse": 12.0892,
+      "r2": 0.1036,
+      "sample_size": 80184,
+      "absolute_error_percentiles": {
+        "p10": 1.3780393846927055,
+        "p25": 3.472347254924472,
+        "p50_median": 7.16181801869174,
+        "p75": 11.714945842040072,
+        "p90": 16.66129116425393,
+        "p95": 21.64955612601963,
+        "p99": 39.83986354611589
+      },
+      "performance_by_duration_range": {
+        "under_20min": {
+          "count": 13232,
+          "pct_of_total": 16.5,
+          "mae": 11.84,
+          "rmse": 12.39
+        },
+        "20_to_35min": {
+          "count": 42392,
+          "pct_of_total": 52.87,
+          "mae": 5.14,
+          "rmse": 6.29
+        },
+        "35_to_50min": {
+          "count": 18740,
+          "pct_of_total": 23.37,
+          "mae": 8.71,
+          "rmse": 10.15
+        },
+        "over_50min": {
+          "count": 5820,
+          "pct_of_total": 7.26,
+          "mae": 28.48,
+          "rmse": 32.32
+        }
+      }
+    }
+  },
+  "test_evaluation": {
+    "mae": 9.385,
+    "rmse": 12.7665,
+    "r2": 0.0908,
+    "sample_size": 53588,
+    "absolute_error_percentiles": {
+      "p10": 1.5008908979039608,
+      "p25": 3.7693047022888937,
+      "p50_median": 7.7826351713396384,
+      "p75": 12.607838863060486,
+      "p90": 17.696800645282842,
+      "p95": 22.546880923034088,
+      "p99": 41.6136249699301
+    },
+    "performance_by_duration_range": {
+      "under_20min": {
+        "count": 8343,
+        "pct_of_total": 15.57,
+        "mae": 13.12,
+        "rmse": 13.67
+      },
+      "20_to_35min": {
+        "count": 27271,
+        "pct_of_total": 50.89,
+        "mae": 5.81,
+        "rmse": 7.05
+      },
+      "35_to_50min": {
+        "count": 13326,
+        "pct_of_total": 24.87,
+        "mae": 7.98,
+        "rmse": 9.45
+      },
+      "over_50min": {
+        "count": 4648,
+        "pct_of_total": 8.67,
+        "mae": 27.7,
+        "rmse": 31.56
+      }
+    }
+  },
+  "split_sample_sizes": {
+    "train": 310521,
+    "validation": 80184,
+    "test": 53588
+  },
+  "artifact_path": "data/artifacts/models\\delivery_duration\\selected_model.joblib",
+  "saved_at": "2026-11-18T11:33:30.754111+00:00",
+  "selection_criterion": "validation_mae",
+  "selection_partition": "validation",
+  "model_capability": {
+    "output_type": "point_prediction",
+    "conditional_quantiles_supported": false,
+    "prediction_intervals": "FUTURE_WORK",
+    "unvalidated_policies": [
+      "ETA + 15-minute operational intervention rule (unvalidated policy; requires retrospective simulation validation)"
+    ]
+  }
+}

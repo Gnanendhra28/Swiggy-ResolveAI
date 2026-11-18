@@ -1,0 +1,163 @@
+{
+  "task_name": "delivery_duration",
+  "prediction_point": "t_order (Order Creation)",
+  "eligible_cohort_description": "Completed orders (cancelled==0) with 5.0 <= duration <= 180.0 minutes",
+  "total_rows": 444293,
+  "train_rows": 310521,
+  "val_rows": 80184,
+  "test_rows": 53588,
+  "features": [
+    {
+      "name": "last_mile_distance",
+      "dtype": "float64",
+      "prediction_point": "t_order",
+      "description": "Restaurant-to-customer doorstep distance in km",
+      "imputation": "median=2.67km"
+    },
+    {
+      "name": "is_zero_last_mile",
+      "dtype": "int32",
+      "prediction_point": "t_order",
+      "description": "Binary indicator for missing/zero last mile distance",
+      "imputation": "imputed with median"
+    },
+    {
+      "name": "last_mile_distance_sq",
+      "dtype": "float64",
+      "prediction_point": "t_order",
+      "description": "Quadratic last-mile distance for non-linear travel latency",
+      "imputation": null
+    },
+    {
+      "name": "distance_bracket",
+      "dtype": "category",
+      "prediction_point": "t_order",
+      "description": "Binned distance tier (ultra_short, short, medium, long, hyper_long)",
+      "imputation": null
+    },
+    {
+      "name": "order_hour",
+      "dtype": "int32",
+      "prediction_point": "t_order",
+      "description": "Order placement hour of day (0-23)",
+      "imputation": null
+    },
+    {
+      "name": "hour_sin",
+      "dtype": "float64",
+      "prediction_point": "t_order",
+      "description": "Cyclic sine transform of hour of day",
+      "imputation": null
+    },
+    {
+      "name": "hour_cos",
+      "dtype": "float64",
+      "prediction_point": "t_order",
+      "description": "Cyclic cosine transform of hour of day",
+      "imputation": null
+    },
+    {
+      "name": "order_dayofweek",
+      "dtype": "int32",
+      "prediction_point": "t_order",
+      "description": "Order placement day of week (0=Mon, 6=Sun)",
+      "imputation": null
+    },
+    {
+      "name": "dow_sin",
+      "dtype": "float64",
+      "prediction_point": "t_order",
+      "description": "Cyclic sine transform of day of week",
+      "imputation": null
+    },
+    {
+      "name": "dow_cos",
+      "dtype": "float64",
+      "prediction_point": "t_order",
+      "description": "Cyclic cosine transform of day of week",
+      "imputation": null
+    },
+    {
+      "name": "is_weekend",
+      "dtype": "int32",
+      "prediction_point": "t_order",
+      "description": "Binary indicator for Saturday/Sunday demand",
+      "imputation": null
+    },
+    {
+      "name": "meal_period",
+      "dtype": "category",
+      "prediction_point": "t_order",
+      "description": "Operational meal window (BREAKFAST, LUNCH_PEAK, etc.)",
+      "imputation": null
+    },
+    {
+      "name": "is_peak_meal_window",
+      "dtype": "int32",
+      "prediction_point": "t_order",
+      "description": "Binary flag for lunch or dinner peak dispatch window",
+      "imputation": null
+    },
+    {
+      "name": "rolling_order_volume_15m",
+      "dtype": "float64",
+      "prediction_point": "t_order",
+      "description": "Backward-looking order placement volume in preceding 15m",
+      "imputation": null
+    },
+    {
+      "name": "rolling_order_volume_60m",
+      "dtype": "float64",
+      "prediction_point": "t_order",
+      "description": "Backward-looking order placement volume in preceding 60m",
+      "imputation": null
+    },
+    {
+      "name": "demand_acceleration",
+      "dtype": "float64",
+      "prediction_point": "t_order",
+      "description": "Ratio of recent 15m surge intensity to hourly average",
+      "imputation": null
+    }
+  ],
+  "target": {
+    "name": "target_delivery_duration_min",
+    "task_type": "REGRESSION",
+    "description": "Actual elapsed minutes from order creation to customer doorstep delivery",
+    "stats": {
+      "min": 5.133333333333334,
+      "median": 29.316666666666666,
+      "mean": 31.64,
+      "max": 179.76666666666668
+    }
+  },
+  "exclusions_log": {
+    "initial_completed_orders": 444782,
+    "under_min_duration_excluded": 89,
+    "over_max_duration_excluded": 400,
+    "eligible_cohort_rows": 444293,
+    "retention_rate_pct": 99.8901
+  },
+  "leakage_exclusions": [
+    "pickup_time",
+    "delivered_time",
+    "allot_time",
+    "accept_time",
+    "first_mile_distance",
+    "rider_id",
+    "session_time",
+    "reassigned_order",
+    "alloted_orders",
+    "delivered_orders",
+    "undelivered_orders",
+    "lifetime_order_count"
+  ],
+  "fitted_parameters": {
+    "fit_partition": "TRAIN (2021-01-26 00:00:00 to 2021-02-03 00:00:00)",
+    "fit_sample_size": 314646,
+    "fitted_median_last_mile_km": 2.67,
+    "fitted_median_session_time_min": 178.15
+  },
+  "data_provenance": "cbhavik/swiggyzomato-order-information (Kaggle)",
+  "created_at": "2026-11-18T11:26:43.707814+00:00"
+}
