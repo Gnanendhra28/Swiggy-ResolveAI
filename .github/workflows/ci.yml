@@ -42,6 +42,8 @@ jobs:
           flake8 backend --count --exit-zero --max-complexity=15 --max-line-length=120 --statistics
 
       - name: Execute Alembic Migration Verification
+        env:
+          PYTHONPATH: .
         run: |
           pytest backend/tests/test_alembic.py -v
 
@@ -49,6 +51,7 @@ jobs:
         env:
           ENVIRONMENT: testing
           DATABASE_URL: sqlite:///./test_ci.db
+          PYTHONPATH: .
         run: |
           pytest backend/tests/ -v --junitxml=junit/test-results.xml
 
