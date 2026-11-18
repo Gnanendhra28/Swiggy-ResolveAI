@@ -13,8 +13,27 @@ import {
   MLPredictionAuditResponse,
 } from './types';
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+/**
+ * Resolves the API base URL depending on execution environment:
+ * 1. Explicit NEXT_PUBLIC_API_URL if configured.
+ * 2. In browser (client-side): uses window.location.origin + '/api/v1', routing through Vercel's /api/(.*) rewrite.
+ * 3. On server (SSR / Route Handlers): uses Vercel's injected internal service binding BACKEND_URL.
+ * 4. Local standalone development fallback: http://localhost:8000/api/v1.
+ */
+export function getApiBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
+  }
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}/api/v1`;
+  }
+  if (process.env.BACKEND_URL) {
+    return `${process.env.BACKEND_URL.replace(/\/$/, '')}/api/v1`;
+  }
+  return 'http://localhost:8000/api/v1';
+}
+
+const API_BASE_URL = getApiBaseUrl();
 
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
