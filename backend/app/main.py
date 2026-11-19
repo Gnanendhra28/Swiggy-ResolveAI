@@ -61,8 +61,15 @@ register_exception_handlers(app)
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 # Top-level Health Probes (Interoperability for Cloud / Container Orchestrators)
-from backend.app.api.routes.health import router as health_router
-app.include_router(health_router, prefix="", tags=["System Health & Diagnostics"])
+from backend.app.schemas.common import HealthResponse, LivenessResponse, ReadinessResponse
+from backend.app.api.routes.health import health_check, liveness_probe, readiness_probe
+
+app.add_api_route("/health", health_check, methods=["GET"], tags=["System Health & Diagnostics"], response_model=HealthResponse)
+app.add_api_route("/health/", health_check, methods=["GET"], include_in_schema=False)
+app.add_api_route("/health/live", liveness_probe, methods=["GET"], tags=["System Health & Diagnostics"], response_model=LivenessResponse)
+app.add_api_route("/health/live/", liveness_probe, methods=["GET"], include_in_schema=False)
+app.add_api_route("/health/ready", readiness_probe, methods=["GET"], tags=["System Health & Diagnostics"], response_model=ReadinessResponse)
+app.add_api_route("/health/ready/", readiness_probe, methods=["GET"], include_in_schema=False)
 
 
 @app.get("/", include_in_schema=False)

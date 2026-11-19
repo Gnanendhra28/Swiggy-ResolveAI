@@ -132,7 +132,7 @@ class OrderIntelligenceAgent:
         elif (
             task_c2.alert_budget_10_per_1000
             or eta_delay_min > 10.0
-            or p90_delay_min > 15.0
+            or (eta_delay_min > 3.0 and p90_delay_min > 15.0)
             or allotment_delay_event_min >= 10.0
             or prep_delay_event_min >= 12.0
         ):

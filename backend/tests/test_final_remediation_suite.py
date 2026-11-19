@@ -384,6 +384,8 @@ class TestOpenAPIRouteReconciliation:
 
     def test_registered_route_count_and_paths(self):
         routes = [route.path for route in app.routes if hasattr(route, "path")]
+        openapi_paths = list(app.openapi().get("paths", {}).keys())
+        all_paths = set(routes) | set(openapi_paths)
         
         critical_routes = [
             "/health",
@@ -409,7 +411,9 @@ class TestOpenAPIRouteReconciliation:
             "/api/v1/simulation/experiments/actions/effectiveness",
         ]
         for route_path in critical_routes:
-            assert any(route_path in r for r in routes), f"Missing route: {route_path}"
+            assert any(route_path == r or route_path in r for r in all_paths), (
+                f"Missing route: {route_path} (Available routes: {sorted(all_paths)})"
+            )
 
 
 # =============================================================================
