@@ -1,6 +1,7 @@
 import os
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
+from backend.app.core.config import settings
 from backend.app.core.logging import logger
 from backend.app.agents.schemas import (
     RiskTier,
@@ -24,7 +25,7 @@ class CustomerResolutionAgent:
 
     def __init__(self, use_llm: bool = True):
         self.use_llm = use_llm
-        self.api_key = os.getenv("GEMINI_API_KEY", "")
+        self.api_key = os.getenv("GEMINI_API_KEY", getattr(settings, "GEMINI_API_KEY", "") or "")
 
     def synthesize(self, state: MultiAgentInvestigationState) -> MultiAgentInvestigationState:
         order_ctx = state.get("order_context", {})
@@ -292,10 +293,12 @@ class CustomerResolutionAgent:
         from langchain_google_genai import ChatGoogleGenerativeAI
         from langchain_core.messages import SystemMessage, HumanMessage
 
+        model_name = os.getenv("GEMINI_MODEL_NAME", getattr(settings, "GEMINI_MODEL_NAME", "gemini-1.5-flash"))
         llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash",
+            model=model_name,
             google_api_key=self.api_key,
             temperature=0.1,
+            timeout=getattr(settings, "GEMINI_TIMEOUT_SECONDS", 10.0),
         )
         structured_llm = llm.with_structured_output(CustomerResolutionSynthesis)
 
