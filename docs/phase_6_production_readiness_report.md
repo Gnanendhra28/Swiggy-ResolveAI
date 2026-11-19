@@ -80,7 +80,7 @@ All environment variables used by the application are documented in detail in [d
 | `REQUEST_TIMEOUT_SECONDS` | No | No | `30.0` | Global HTTP request execution timeout |
 | `BACKEND_CORS_ORIGINS` | No | No | `http://localhost:3000,...` | Allowed CORS origins for browser security |
 | `GEMINI_API_KEY` | No | **Yes** | `None` / omitted | Google AI Studio key (deterministic fallback active when absent) |
-| `GEMINI_MODEL_NAME` | No | No | `"gemini-1.5-flash"` | Target Gemini model identifier |
+| `GEMINI_MODEL_NAME` | No | No | `"gemini-3.5-flash"` | Target Gemini model identifier |
 | `GEMINI_TIMEOUT_SECONDS` | No | No | `10.0` | Max timeout before falling back to rule synthesizer |
 | `ML_ARTIFACTS_DIR` | No | No | `"data/artifacts/models/phase_2_5"` | Model artifact directory path |
 | `POSTGRES_USER` | No | No | `postgres` | Docker PostgreSQL user |

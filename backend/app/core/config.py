@@ -50,7 +50,7 @@ class Settings(BaseSettings):
 
     # AI & Gemini API Integration
     GEMINI_API_KEY: Optional[str] = None
-    GEMINI_MODEL_NAME: str = "gemini-1.5-flash"
+    GEMINI_MODEL_NAME: str = "gemini-3.5-flash"
     GEMINI_TIMEOUT_SECONDS: float = 10.0
 
     # ML Artifacts Configuration

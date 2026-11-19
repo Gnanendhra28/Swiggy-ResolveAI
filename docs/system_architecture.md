@@ -203,7 +203,7 @@ sequenceDiagram
    - Detects extreme first-mile transit distances (>3.0 km) and corridor traffic congestion.
 4. **`CustomerResolutionAgent`**:
    - Synthesizes findings from Order, Kitchen, and Fleet agents into a root cause explanation.
-   - Invokes Google Gemini (`gemini-1.5-flash`) via structured JSON schema prompts.
+   - Invokes Google Gemini (`gemini-3.5-flash`) via structured JSON schema prompts.
    - Graceful Degradation: If `GEMINI_API_KEY` is absent, invalid, or times out (>10s), automatically falls back to deterministic rule-grounded synthesis without raising errors.
 
 ---

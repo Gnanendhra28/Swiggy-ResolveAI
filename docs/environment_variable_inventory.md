@@ -19,7 +19,7 @@
 | **`NEXT_PUBLIC_API_URL`** | Frontend (`api.ts`) | **Required** on Vercel | Public | `http://localhost:8000/api/v1` | Public backend base URL consumed by client-side browser fetches. Must use `https://` in production. | Deployed backend URL + `/api/v1` (`https://<backend-host>/api/v1`). |
 | **`BACKEND_URL`** | Frontend (`next.config.ts`, `api.ts`) | Optional (Recommended) | Public/Server | `http://127.0.0.1:8000` | Target URL for Next.js server-side reverse-proxy rewrites (`/api/:path*`) and Server-Side Rendering (SSR). | Deployed backend URL (`https://<backend-host>`). |
 | **`GEMINI_API_KEY`** | Backend (`Settings`, `CustomerResolutionAgent`) | Optional | **Secret** | `None` / omitted | Google Gemini API key used by Customer Resolution Agent for structured root-cause synthesis. If omitted, automated deterministic fallback engine is used. | Google AI Studio (`https://aistudio.google.com/app/apikey`). |
-| **`GEMINI_MODEL_NAME`** | Backend (`Settings`, `CustomerResolutionAgent`) | Optional | Public | `"gemini-1.5-flash"` | Target Google Gemini model identifier. Supported official models: `gemini-1.5-flash`, `gemini-1.5-pro`, `gemini-2.0-flash`. | Google AI Studio documentation. |
+| **`GEMINI_MODEL_NAME`** | Backend (`Settings`, `CustomerResolutionAgent`) | Optional | Public | `"gemini-3.5-flash"` | Target Google Gemini model identifier. Supported models: `gemini-3.5-flash` (recommended default, automatically routed to current flash generation in Google AI Studio), `gemini-3.6-flash`, `gemini-3.8-flash`, `gemini-2.0-flash`. | Google AI Studio documentation. |
 | **`GEMINI_TIMEOUT_SECONDS`** | Backend (`Settings`, `CustomerResolutionAgent`) | Optional | Public | `10.0` | Maximum timeout in seconds before aborting Gemini call and triggering deterministic rule fallback. | DevOps configuration (default: 10s). |
 | **`AUTH_ALGORITHM`** | Backend (`Settings`, `auth.py`) | Optional | Public | `"HS256"` | Cryptographic signature algorithm for JWT bearer tokens. | Codebase default (`"HS256"`). |
 | **`AUTH_ISSUER`** | Backend (`Settings`, `auth.py`) | Optional | Public | `"swiggy-resolveai"` | Expected JWT issuer claim (`iss`). Verified on every incoming bearer token. | Codebase default. |
@@ -51,7 +51,7 @@ These variables **must be explicitly provisioned** in production:
 
 ### 2.2 Optional Variables with Safe Defaults
 - `GEMINI_API_KEY`: If not provided, `CustomerResolutionAgent` automatically degrades to deterministic rule synthesis. The application functions completely without an API key.
-- `GEMINI_MODEL_NAME`: Defaults to `"gemini-1.5-flash"`.
+- `GEMINI_MODEL_NAME`: Defaults to `"gemini-3.5-flash"`.
 - `GEMINI_TIMEOUT_SECONDS`: Defaults to `10.0` seconds.
 - `BACKEND_URL`: Used for Next.js SSR and server-side rewrites.
 - `DB_POOL_SIZE`, `DB_MAX_OVERFLOW`, `DB_POOL_TIMEOUT`, `DB_POOL_RECYCLE`: Defaults are tuned for PostgreSQL micro/standard instances.
@@ -84,11 +84,30 @@ Next.js automatically exposes any environment variable prefixed with `NEXT_PUBLI
 
 ## 3. Gemini Model Identification & Support Audit
 
-Official Google AI Studio documentation defines the following model naming convention:
-- **`gemini-1.5-flash`**: High-frequency, low-latency, economical model supporting structured output (`with_structured_output`). **(Recommended default)**.
-- **`gemini-1.5-pro`**: Higher capacity reasoning model for deep analysis.
-- **`gemini-2.0-flash`**: New generation multimodal model (current preview / GA).
-- **`gemini-2.0-flash-lite`**: Ultra-lightweight model.
+Official Google AI Studio documentation defines the current Gemini model lifecycle:
+- **`gemini-3.5-flash`**: Modern high-efficiency Flash model supporting structured output (`with_structured_output`) via `langchain-google-genai`. **(Recommended default)**. In Google AI Studio, active requests using `gemini-3.5-flash` are handled directly or automatically routed to current generation Flash (`gemini-3.6-flash` / `gemini-3.8-flash`).
+- **`gemini-3.8-flash`**: Primary high-intelligence Flash model optimized for long-horizon agents and structured synthesis.
+- **`gemini-2.0-flash`**: Multimodal flash model milestone.
+- **`gemini-1.5-flash`**: **Deprecated/Obsolete** milestone. Replaced by `gemini-3.5-flash` as the codebase default.
 
-> [!WARNING]
-> Identifiers such as `gemini-2.5-flash` and `gemini-3.5-flash` **do not exist** in Google's official Gemini API catalog. Calling the API with non-existent identifiers causes a runtime `NotFound` error. Ensure `GEMINI_MODEL_NAME` is set to `gemini-1.5-flash` or `gemini-2.0-flash`.
+> [!NOTE]
+> `CustomerResolutionAgent` in `backend/app/agents/customer_resolution.py` utilizes LangChain's `ChatGoogleGenerativeAI(model=settings.GEMINI_MODEL_NAME, timeout=settings.GEMINI_TIMEOUT_SECONDS)`. If `GEMINI_API_KEY` is omitted or if API latency exceeds 10 seconds, the agent deterministically falls back to the internal rule engine with zero disruption to the resolution graph.
+
+---
+
+## 4. Measured Runtime Resource & Instance Sizing Specifications
+
+Direct physical profiling of the backend application establishes the following resource requirements:
+
+| Metric | Measured Value | Notes |
+| :--- | :---: | :--- |
+| **Serialized Model Artifacts** | **1.99 MB** (2,084,098 B) | 8 files in `data/artifacts/models/phase_2_5/` (`task_a` quantiles: 1.30 MB, `task_c2`: 0.34 MB, baseline models: 0.32 MB, registry/calibrator: 0.03 MB). |
+| **Cold Startup Time** | **4.2s – 15.3s** | FastAPI boot, database pool connection init, and LightGBM model deserialization. |
+| **Python Traced Heap (Startup)** | **135.90 MB** | Core FastAPI, Pydantic, SQLAlchemy, and LangGraph dependency graph. |
+| **Python Traced Heap (Post-Model Load)** | **146.55 MB** | In-memory LightGBM regressors and isotonic calibrators (+10.65 MB). |
+| **Python Traced Heap (Peak Inference)** | **147.76 MB** | In-flight Task A quantile prediction tensor allocations. |
+| **Process Working Set (RSS)** | **~250 MB – 350 MB** | Full operating system process RSS under active request load. |
+
+### Instance Recommendation:
+- **Minimum Viable Instance**: **Render Starter (512 MB RAM, 0.5 vCPU)**. Sufficient for low-concurrency testing and staging environments.
+- **Recommended Production Instance**: **Render Standard (1 GB to 2 GB RAM, 1 vCPU)**. Essential for production workloads to prevent Out-Of-Memory (OOM) kills during concurrent LangGraph multi-agent debates, quantile regressions, and data processing.

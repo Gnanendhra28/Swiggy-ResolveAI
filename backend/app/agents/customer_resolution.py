@@ -293,7 +293,7 @@ class CustomerResolutionAgent:
         from langchain_google_genai import ChatGoogleGenerativeAI
         from langchain_core.messages import SystemMessage, HumanMessage
 
-        model_name = os.getenv("GEMINI_MODEL_NAME", getattr(settings, "GEMINI_MODEL_NAME", "gemini-1.5-flash"))
+        model_name = os.getenv("GEMINI_MODEL_NAME", getattr(settings, "GEMINI_MODEL_NAME", "gemini-3.5-flash"))
         llm = ChatGoogleGenerativeAI(
             model=model_name,
             google_api_key=self.api_key,

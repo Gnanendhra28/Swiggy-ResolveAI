@@ -45,7 +45,7 @@ The complete business workflow was validated under live execution:
 2. **Machine Learning Multi-Task Inference**:
    `MLInferenceService` generates Task A delivery duration quantiles ($P10, P50, P90$) using LightGBM. Monotonic sorting guarantees $P10 \le P50 \le P90$. At the landmark delivery stage ($t \ge t_{\text{allot}} + 5\text{m}$), Task C2 evaluates calibrated cancellation risk using isotonic regression. Prior to this landmark or on terminal orders, Task C2 is marked ineligible.
 3. **LangGraph Multi-Agent Debate & Root Cause Analysis**:
-   Four specialized agents (`OrderIntelligenceAgent`, `RestaurantCoordinationAgent`, `DeliveryIntelligenceAgent`, `CustomerResolutionAgent`) debate the operational context in a structured state graph. Generative LLM synthesis via Google Gemini (`gemini-1.5-flash`) extracts physical bottlenecks. If the LLM times out (>10s) or if `GEMINI_API_KEY` is omitted, the agent seamlessly degrades to deterministic rule synthesis without raising 500 errors.
+   Four specialized agents (`OrderIntelligenceAgent`, `RestaurantCoordinationAgent`, `DeliveryIntelligenceAgent`, `CustomerResolutionAgent`) debate the operational context in a structured state graph. Generative LLM synthesis via Google Gemini (`gemini-3.5-flash`) extracts physical bottlenecks. If the LLM times out (>10s) or if `GEMINI_API_KEY` is omitted, the agent seamlessly degrades to deterministic rule synthesis without raising 500 errors.
 4. **Deterministic PolicyEngine Gating**:
    `PolicyEngine` evaluates the candidate recommendations against RBAC (`OPERATOR`, `OPS_LEAD`, `ADMIN`), customer consent opt-out, 30-minute recommendation TTL, order state drift, and zone fleet deficit thresholds.
 5. **Human-in-the-Loop Approval Console**:

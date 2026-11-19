@@ -28,7 +28,7 @@ This guide provides an exhaustive configuration inventory for the Swiggy Resolve
 | `REQUEST_TIMEOUT_SECONDS` | Optional | No | Backend (`middleware`) | `30.0` | Global HTTP request execution timeout in seconds. |
 | `BACKEND_CORS_ORIGINS` | Optional | No | Backend (`main`) | `http://localhost:3000,http://127.0.0.1:3000,http://localhost:8000` | Comma-separated list or JSON array of allowed frontend origins for CORS. |
 | `GEMINI_API_KEY` | Optional | **Yes** | AI Agents (`CustomerResolution`) | `None` / omitted | Google Gemini API key. If absent, system gracefully falls back to deterministic rule synthesis. Obtain via Google AI Studio. |
-| `GEMINI_MODEL_NAME` | Optional | No | AI Agents (`CustomerResolution`) | `"gemini-1.5-flash"` | Target Gemini model identifier for structured resolution synthesis. |
+| `GEMINI_MODEL_NAME` | Optional | No | AI Agents (`CustomerResolution`) | `"gemini-3.5-flash"` | Target Gemini model identifier for structured resolution synthesis. |
 | `GEMINI_TIMEOUT_SECONDS`| Optional | No | AI Agents (`CustomerResolution`) | `10.0` | Max timeout for Gemini API calls before triggering deterministic fallback. |
 | `ML_ARTIFACTS_DIR` | Optional | No | ML Platform (`MLInferenceService`) | `"data/artifacts/models/phase_2_5"` | Relative or absolute path to serialized Phase 2.5 models and metadata. |
 | `POSTGRES_USER` | Optional | No | Docker Compose | `postgres` | Username for containerized PostgreSQL instance. |

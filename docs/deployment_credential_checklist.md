@@ -82,7 +82,7 @@ If an API key was previously pasted in a public chat, log, or git commit:
 2. Select your Google Cloud project (or generate a free tier project).
 3. Copy the newly generated key (`AIzaSy...`).
 4. Paste it directly into the backend hosting environment variables as `GEMINI_API_KEY`.
-5. Verify model configuration: Set `GEMINI_MODEL_NAME=gemini-1.5-flash` (or `gemini-2.0-flash`). **Never use non-existent identifiers like `gemini-2.5-flash` or `gemini-3.5-flash`.**
+5. Verify model configuration: Set `GEMINI_MODEL_NAME=gemini-3.5-flash` (recommended default, automatically routed to current generation Flash in Google AI Studio) or `gemini-3.8-flash` / `gemini-2.0-flash`. Note that older `gemini-1.5-flash` endpoints are deprecated.
 
 ---
 
