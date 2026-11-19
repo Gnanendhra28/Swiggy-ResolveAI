@@ -38,7 +38,7 @@ export function getApiBaseUrl(): string {
   if (process.env.BACKEND_URL) {
     return `${process.env.BACKEND_URL.replace(/\/$/, '')}/api/v1`;
   }
-  return 'http://localhost:8000/api/v1';
+  return 'https://swiggy-resolveai.onrender.com/api/v1';
 }
 
 const API_BASE_URL = getApiBaseUrl();
