@@ -1,4 +1,8 @@
 import os
+# Force local SQLite database for unit and regression test suite execution
+os.environ["DATABASE_URL"] = "sqlite:///./resolveai.db"
+os.environ["ENVIRONMENT"] = "testing"
+
 import pytest
 from typing import Generator
 from fastapi.testclient import TestClient

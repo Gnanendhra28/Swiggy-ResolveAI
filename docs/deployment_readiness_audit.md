@@ -12,7 +12,7 @@
 This DevOps audit provides a complete evaluation of the Swiggy ResolveAI repository for cloud deployment. The inspection verified that:
 1. **Frontend**: The Next.js 16 frontend is fully decoupled, compiles cleanly with Turbopack, and is **100% ready for Vercel deployment** with zero architectural changes.
 2. **Backend**: The FastAPI backend contains heavy machine learning dependencies (`scipy`, `pandas`, `lightgbm`, `shap`, `scikit-learn`, `langgraph`, model binaries) exceeding Vercel's 250 MB serverless uncompressed bundle size limit. The backend is configured for deployment on a container runtime (Render, Railway, AWS App Runner) using the repository's production-ready [`backend/Dockerfile`](file:///c:/Users/ASUS/Desktop/Swiggy%20ResolveAI/backend/Dockerfile).
-3. **Database**: PostgreSQL 15+ is fully supported via `psycopg2-binary>=2.9.9` and SQLAlchemy connection pooling. Alembic migrations execute cleanly.
+3. **Database**: Lakebase Postgres on Neon (v18.7) is fully verified with 100% schema equivalence across all 11 tables, columns, indexes, and constraints. Alembic migration tracking stamped to `005_phase_5_experiments_and_kpis`. Fresh migrations from 001 to head verified in isolated schema after patching Alembic version column to `VARCHAR(64)`.
 4. **Redis**: An exhaustive code inspection confirms **zero Redis dependencies**. Redis is not required.
 5. **AI Integration**: Gemini model configuration has been updated to the active Flash candidate `gemini-3.5-flash` (replacing the deprecated `gemini-1.5-flash`), compatible with `langchain-google-genai` and automatically routed to current flash generation. Deterministic rule-based fallback is fully preserved when `GEMINI_API_KEY` is omitted.
 6. **Safety Governance**: Production execution requires `SHADOW` mode. `SIMULATION` is prohibited in production, and `LIVE` execution is permanently blocked across all environments.
@@ -91,22 +91,27 @@ This DevOps audit provides a complete evaluation of the Swiggy ResolveAI reposit
 
 ## 4. Verification Test & Build Results
 
-All tests and compilation checks have been executed and verified:
+All tests, compilation checks, and database verifications have been executed and verified:
 
-| Verification Target | Command | Duration | Exit Code | Result |
+| Verification Target | Command | Scope / Duration | Exit Code | Result |
 | :--- | :--- | :---: | :---: | :--- |
-| **Backend Test Suite** | `python -m pytest backend/tests/ -q` | 31.79s | `0` | **207 passed**, 0 failed |
-| **Agent Unit Tests** | `python -m pytest backend/tests/test_phase_3_agents.py` | 1.34s | `0` | **15 passed**, 0 failed |
-| **Frontend Production Build** | `npm --prefix frontend run build` | 7.60s | `0` | **Clean build** (9/9 routes static/hybrid) |
-| **End-to-End Demo Script** | `python scripts/demo_runner.py` | 1.80s | `0` | **8/8 operational steps passed** |
+| **Backend Test Suite** | `python -m pytest backend/tests/ -q` | Local Test Isolation (31.88s) | `0` | **207 passed**, 0 failed |
+| **Agent Unit Tests** | `python -m pytest backend/tests/test_phase_3_agents.py` | Local Test Isolation (1.34s) | `0` | **15 passed**, 0 failed |
+| **Frontend Production Build** | `npm run build` | Turbopack Production Build (558ms) | `0` | **Clean build** (9/9 routes static/hybrid) |
+| **Neon Schema Integrity Audit** | `python scripts/audit_neon_schema.py` | Live Neon Instance (Singapore) | `0` | **100% Equivalence** (0 discrepancies) |
+| **Fresh PostgreSQL Migration** | `python scripts/test_fresh_neon_migration.py` | Live Neon Instance (Clean Schema) | `0` | **001 $\to$ 005 Head Migration Passed** |
+| **Neon Reliability & Probes** | `python scripts/test_neon_reliability.py` | Live Neon Instance | `0` | **Rollback, Commit, & Health Probes OK** |
+| **End-to-End Demo Script** | `python scripts/demo_runner.py` | Live Backend + Neon Database | `0` | **8/8 operational steps passed** (1.80s) |
 
 ---
 
 ## 5. Deployment Readiness Verdict
 
+$$\mathbf{VERDICT:\;CONDITIONAL\;GO}$$
+
 | Component | Target Platform | Deployment Status | Remaining Pre-requisites |
 | :--- | :--- | :---: | :--- |
 | **Frontend** | Vercel (Next.js 16) | **READY_FOR_DEPLOYMENT** | Set Root Directory to `frontend`. Configure `NEXT_PUBLIC_API_URL` and `BACKEND_URL`. |
 | **Backend** | Container Host (Render / Railway) | **READY_FOR_DEPLOYMENT** | Build using `backend/Dockerfile`. Configure `DATABASE_URL`, `AUTH_SECRET_KEY`, `BACKEND_CORS_ORIGINS`. |
-| **Database** | Hosted PostgreSQL 15+ | **READY_FOR_DEPLOYMENT** | Provision database on Neon/Supabase/Render. Run `alembic upgrade head`. |
+| **Database** | Hosted Neon PostgreSQL 18+ | **CONDITIONAL_GO** | **Action Required**: Rotate the compromised `neondb_owner` role password in the Neon Console before public release. |
 | **Security Mode** | Production Runtime | **SHADOW_APPROVED** | `EXECUTION_MODE=SHADOW` verified. `LIVE` execution strictly disabled. |

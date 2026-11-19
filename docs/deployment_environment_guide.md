@@ -164,6 +164,12 @@ In automated CI/CD pipelines or Render build commands, migrations can be run as 
 python -m alembic -c backend/alembic.ini upgrade head && uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
 ```
 
+> [!TIP]
+> **Neon Lakebase Postgres Integration Notes**:
+> - **Pooled vs. Direct Routing**: The web service uses the connection pooler URL (`-pooler`) for high-concurrency request handling. `backend/alembic/env.py` automatically routes schema migrations to the direct unpooled endpoint, eliminating PgBouncer startup parameter limitations.
+> - **Alembic Version Identifier Length**: `backend/alembic/env.py` enforces `VARCHAR(64)` on the `alembic_version` table, preventing PostgreSQL string truncation errors on descriptive migration revisions.
+> - **Public DNS Fallback**: `backend/app/database/session.py` embeds an automatic public DNS fallback resolver to ensure high connection availability across varying network environments.
+
 ---
 
 ## 5. Security & Operational Release Invariants
