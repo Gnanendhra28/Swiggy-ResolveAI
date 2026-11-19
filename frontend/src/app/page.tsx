@@ -23,6 +23,7 @@ import { fetchMetrics, fetchOrders } from '@/lib/api';
 import { DashboardMetrics, OrderSummary } from '@/lib/types';
 import { StatCard } from '@/components/StatCard';
 import { OrderStatusBadge } from '@/components/OrderStatusBadge';
+import { formatDataSource } from '@/lib/presentation';
 
 export default function OperationsDashboard() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
@@ -41,7 +42,7 @@ export default function OperationsDashboard() {
       setMetrics(m);
       setRecentOrders(ords.items || []);
     } catch (err: any) {
-      setError(err.message || 'Failed to connect to ResolveAI backend service.');
+      setError(err.message || 'Unable to connect to ResolveAI backend service.');
     } finally {
       setLoading(false);
     }
@@ -63,6 +64,17 @@ export default function OperationsDashboard() {
     }
   };
 
+  const getEventTitle = (eventType: string) => {
+    const t = eventType.toUpperCase();
+    if (t.includes('DELAY') || t.includes('CONGESTION')) return 'Delivery Delay Identified';
+    if (t.includes('DELIVERED')) return 'Delivered on Time';
+    if (t.includes('RECOVERY') || t.includes('CREDIT')) return 'Apology Voucher Issued';
+    if (t.includes('REASSIGNED')) return 'Delivery Partner Reassigned';
+    if (t.includes('PREPARATION') || t.includes('ACCEPTED')) return 'Kitchen Started Cooking';
+    if (t.includes('PICKED_UP')) return 'Picked Up by Courier';
+    return t.replace(/_/g, ' ');
+  };
+
   return (
     <div className="space-y-6">
       {/* Operations Dashboard Top Header */}
@@ -71,11 +83,11 @@ export default function OperationsDashboard() {
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#FC8019]" />
             <h1 className="text-2xl font-black text-[#282C3F] tracking-tight">
-              Operations Intelligence Dashboard
+              Operations Overview
             </h1>
           </div>
           <p className="text-xs text-[#686B78] mt-1 font-medium">
-            Real-time proactive monitoring, delivery anomaly detection, and autonomous recovery telemetry.
+            Live order monitoring, early delay detection, and automated customer issue resolution.
           </p>
         </div>
 
@@ -98,7 +110,7 @@ export default function OperationsDashboard() {
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#FC8019] hover:bg-[#E27315] text-white transition-all shadow-sm shadow-orange-500/20 hover:shadow"
           >
             <PlayCircle className="w-4 h-4" />
-            <span>Launch Simulation</span>
+            <span>Try a Scenario</span>
           </Link>
         </div>
       </div>
@@ -122,30 +134,30 @@ export default function OperationsDashboard() {
       {/* KPI Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Total Orders"
+          title="Total Orders Monitored"
           value={loading && !metrics ? '...' : metrics?.total_orders ?? 0}
-          subtitle="All runtime and historical orders"
+          subtitle="All active, completed, and demo orders"
           icon={Package}
           variant="primary"
         />
         <StatCard
-          title="Active Orders"
+          title="Orders in Progress"
           value={loading && !metrics ? '...' : metrics?.active_orders ?? 0}
-          subtitle="In preparation or out for delivery"
+          subtitle="Being prepared or out for delivery"
           icon={Clock}
           variant="default"
         />
         <StatCard
-          title="Delivered Successfully"
+          title="Delivered on Time"
           value={loading && !metrics ? '...' : metrics?.delivered_orders ?? 0}
-          subtitle="Fulfilled within operational SLA"
+          subtitle="Completed within promised delivery window"
           icon={CheckCircle2}
           variant="success"
         />
         <StatCard
-          title="Delayed / Escalated"
+          title="Needs Attention"
           value={loading && !metrics ? '...' : metrics?.delayed_orders ?? 0}
-          subtitle="Breached SLA or escalated to support"
+          subtitle="Orders running late or requiring action"
           icon={AlertTriangle}
           variant="danger"
         />
@@ -160,7 +172,7 @@ export default function OperationsDashboard() {
               <div>
                 <h2 className="text-base font-bold text-[#282C3F]">Recent Orders</h2>
                 <p className="text-xs text-[#686B78] mt-0.5">
-                  Latest active and completed orders requiring intelligence oversight
+                  Latest active orders being tracked for potential delivery delays
                 </p>
               </div>
               <Link
@@ -178,17 +190,17 @@ export default function OperationsDashboard() {
                 <thead>
                   <tr className="bg-[#FBFBFC] text-[#686B78] font-bold border-b border-[#E9ECEE] uppercase tracking-wider text-[11px]">
                     <th className="py-3 px-4">Order ID</th>
-                    <th className="py-3 px-4">Restaurant</th>
+                    <th className="py-3 px-4">Restaurant Partner</th>
                     <th className="py-3 px-4">Status</th>
                     <th className="py-3 px-4">Promised Delivery</th>
-                    <th className="py-3 px-4 text-right">Action</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#F4F5F7]">
                   {recentOrders.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="py-8 text-center text-[#93959F]">
-                        {loading ? 'Loading orders...' : 'No orders found. Launch a simulation to create test orders.'}
+                        {loading ? 'Loading orders...' : 'No orders found. Try running a scenario from Try Scenarios.'}
                       </td>
                     </tr>
                   ) : (
@@ -207,10 +219,10 @@ export default function OperationsDashboard() {
                         </td>
                         <td className="py-3.5 px-4">
                           <div className="font-semibold text-[#282C3F]">
-                            {ord.restaurant_name || (ord.data_source === 'PUBLIC_HISTORICAL' ? 'Restaurant unavailable in source dataset' : 'Restaurant Partner')}
+                            {ord.restaurant_name || (ord.data_source === 'PUBLIC_HISTORICAL' ? 'Historical Partner' : 'Restaurant Partner')}
                           </div>
                           <div className="text-[11px] text-[#93959F]">
-                            {ord.restaurant_city || (ord.data_source === 'PUBLIC_HISTORICAL' ? 'Location not captured in dataset' : 'Bengaluru')}
+                            {ord.restaurant_city || (ord.data_source === 'PUBLIC_HISTORICAL' ? 'Archived benchmark' : 'Bengaluru')}
                           </div>
                         </td>
                         <td className="py-3.5 px-4">
@@ -227,7 +239,7 @@ export default function OperationsDashboard() {
                             href={`/orders/${ord.id}`}
                             className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-[#FC8019] bg-[#FFF5ED] hover:bg-[#FFEADA] border border-[#FED7AA] transition-colors"
                           >
-                            <span>Inspect</span>
+                            <span>View Details</span>
                             <ChevronRight className="w-3 h-3" />
                           </Link>
                         </td>
@@ -244,27 +256,28 @@ export default function OperationsDashboard() {
             <div className="flex items-center justify-between pb-4 border-b border-[#F4F5F7]">
               <div>
                 <h2 className="text-base font-bold text-[#282C3F]">
-                  Recent Operational Events
+                  Recent Activity History
                 </h2>
                 <p className="text-xs text-[#686B78] mt-0.5">
-                  Live anomaly alerts, dispatch updates, and autonomous recovery events
+                  Recent order milestones, delay alerts, and resolution actions
                 </p>
               </div>
               <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#FFF5ED] text-[#FC8019] border border-[#FED7AA]">
-                {metrics?.recent_activity?.length ?? 0} events
+                {metrics?.recent_activity?.length ?? 0} updates
               </span>
             </div>
 
             <div className="divide-y divide-[#F4F5F7] mt-2">
               {!metrics?.recent_activity || metrics.recent_activity.length === 0 ? (
                 <div className="py-8 text-center text-xs text-[#93959F]">
-                  No operational events recorded yet. Run a scenario from the Simulation Center.
+                  No activity recorded yet. Run a test scenario from Try Scenarios.
                 </div>
               ) : (
                 metrics.recent_activity.slice(0, 5).map((act) => {
                   const isDelay = act.event_type.includes('DELAY') || act.event_type.includes('TIMEOUT');
                   const isSuccess = act.event_type.includes('DELIVERED') || act.event_type.includes('SUCCESSFUL');
-                  const isRecovery = act.event_type.includes('RECOVERY') || act.event_type.includes('REASSIGNED');
+                  const isRecovery = act.event_type.includes('RECOVERY') || act.event_type.includes('REASSIGNED') || act.event_type.includes('WALLET_CREDIT');
+                  const sourceMeta = formatDataSource(act.data_source);
 
                   return (
                     <div
@@ -295,10 +308,10 @@ export default function OperationsDashboard() {
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-bold text-[#282C3F]">
-                              {act.event_type.replace(/_/g, ' ')}
+                              {getEventTitle(act.event_type)}
                             </span>
-                            <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-[#F4F5F7] text-[#686B78]">
-                              {act.data_source}
+                            <span className={`text-[10px] font-semibold px-1.5 py-0.2 rounded border ${sourceMeta.badgeClass}`}>
+                              {sourceMeta.shortLabel}
                             </span>
                           </div>
 
@@ -330,9 +343,9 @@ export default function OperationsDashboard() {
         <div className="space-y-6">
           {/* Status Distribution Breakdown */}
           <div className="bg-white rounded-2xl border border-[#E9ECEE] p-5 shadow-[0_2px_8px_rgba(40,44,63,0.04)]">
-            <h2 className="text-base font-bold text-[#282C3F]">Status Distribution</h2>
+            <h2 className="text-base font-bold text-[#282C3F]">Order Progress Breakdown</h2>
             <p className="text-xs text-[#686B78] mt-0.5">
-              Breakdown across fulfillment stages
+              Current stage of all monitored orders
             </p>
 
             <div className="mt-5 space-y-4">
@@ -350,11 +363,23 @@ export default function OperationsDashboard() {
                     return 'bg-[#FC8019]/70';
                   };
 
+                  const getStatusLabel = (st: string) => {
+                    const s = st.toUpperCase();
+                    if (s === 'DELIVERED') return 'Delivered on Time';
+                    if (s === 'RECOVERED') return 'Resolved with Support';
+                    if (s === 'OUT_FOR_DELIVERY') return 'Out for Delivery';
+                    if (s === 'PREPARING') return 'Preparing in Kitchen';
+                    if (s === 'PLACED') return 'Order Placed';
+                    if (s === 'ESCALATED') return 'Needs Attention';
+                    if (s === 'CANCELLED') return 'Cancelled';
+                    return s.replace(/_/g, ' ');
+                  };
+
                   return (
                     <div key={status} className="space-y-1.5">
                       <div className="flex justify-between items-center text-xs">
                         <span className="font-semibold text-[#282C3F]">
-                          {status.replace(/_/g, ' ')}
+                          {getStatusLabel(status)}
                         </span>
                         <span className="text-[#686B78] font-bold">
                           {count} ({pct}%)
@@ -385,16 +410,16 @@ export default function OperationsDashboard() {
               </div>
               <div>
                 <h3 className="text-sm font-bold text-[#282C3F]">
-                  Autonomous Recovery
+                  Automated Delay Resolution
                 </h3>
                 <span className="text-[10px] font-bold text-[#FC8019] uppercase tracking-wider">
-                  Swiggy Operational Intelligence
+                  Proactive Order Support
                 </span>
               </div>
             </div>
 
             <p className="text-xs text-[#686B78] leading-relaxed">
-              ResolveAI predicts delay risks before customers notice, coordinating express dispatch, rider reassignment, and proactive customer updates.
+              ResolveAI spots delivery delays early before customers complain—suggesting driver reassignment, kitchen follow-ups, and customer notifications.
             </p>
 
             <div className="pt-2">
@@ -402,7 +427,7 @@ export default function OperationsDashboard() {
                 href="/simulation"
                 className="w-full flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-[#FC8019] hover:bg-[#E27315] text-white text-xs font-bold transition-all shadow-sm shadow-orange-500/20"
               >
-                <span>Simulate Delay & Recovery</span>
+                <span>Test Delay & Resolution Scenarios</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>

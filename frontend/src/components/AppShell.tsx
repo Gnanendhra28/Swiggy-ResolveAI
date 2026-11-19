@@ -62,7 +62,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
 
         <footer className="border-t border-[#E9ECEE] bg-white py-4 px-6 text-center text-xs text-[#93959F]">
           <p>
-            <strong className="text-[#686B78]">Swiggy ResolveAI</strong> — Proactive Order Intelligence & Autonomous Recovery Platform • Phase 1 Prototype • Public datasets & synthetic order simulation
+            <strong className="text-[#686B78]">Swiggy ResolveAI</strong> — Automated Order Support & Resolution Platform • Operations Console • Demo and historical order simulation
           </p>
         </footer>
       </div>

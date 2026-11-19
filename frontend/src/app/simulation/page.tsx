@@ -30,6 +30,8 @@ import {
   ShieldAlert,
   HelpCircle,
   ExternalLink,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import {
   fetchSimulationScenarios,
@@ -47,11 +49,12 @@ import {
   StressTestItem,
 } from '@/lib/types';
 import { OrderStatusBadge } from '@/components/OrderStatusBadge';
+import { formatDataSource } from '@/lib/presentation';
 
 export default function SimulationCenterPage() {
   const [activeTab, setActiveTab] = useState<'EXPERIMENTS' | 'GENERATOR'>('EXPERIMENTS');
 
-  // Generator state (Phase 1-4)
+  // Generator state (Demo Orders)
   const [scenarios, setScenarios] = useState<ScenarioMeta[]>([]);
   const [selectedScenario, setSelectedScenario] = useState<ScenarioType>('NORMAL_ORDER');
   const [orderCount, setOrderCount] = useState<number>(3);
@@ -61,7 +64,7 @@ export default function SimulationCenterPage() {
   const [result, setResult] = useState<SimulationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Phase 5 Experiment state
+  // Strategy Comparison state
   const [expScenario, setExpScenario] = useState<string>('COMBINED_KITCHEN_DELIVERY_DELAY');
   const [expVolume, setExpVolume] = useState<number>(50);
   const [expSeed, setExpSeed] = useState<number>(42);
@@ -78,6 +81,7 @@ export default function SimulationCenterPage() {
 
   // Selected comparison tab in experiment details
   const [activeComparisonIndex, setActiveComparisonIndex] = useState<number>(0);
+  const [showTechnicalStats, setShowTechnicalStats] = useState<boolean>(false);
 
   useEffect(() => {
     const loadInitial = async () => {
@@ -122,7 +126,7 @@ export default function SimulationCenterPage() {
       });
       setResult(res);
     } catch (err: any) {
-      setError(err.message || 'Simulation generation failed.');
+      setError(err.message || 'Demo order generation failed.');
     } finally {
       setSimulating(false);
     }
@@ -144,7 +148,7 @@ export default function SimulationCenterPage() {
       setActiveComparisonIndex(0);
       loadRecentExperiments();
     } catch (err: any) {
-      setError(err.message || 'Experiment execution failed.');
+      setError(err.message || 'Strategy comparison run failed.');
     } finally {
       setRunningExperiment(false);
     }
@@ -183,18 +187,18 @@ export default function SimulationCenterPage() {
   };
 
   const EXP_SCENARIOS = [
-    { id: 'NORMAL_DELIVERY', label: 'Normal Delivery', desc: 'Baseline operations without unexpected friction' },
-    { id: 'RESTAURANT_PREP_DELAY', label: 'Kitchen Prep Delay', desc: '15-25m extra prep time due to dish complexity' },
-    { id: 'RESTAURANT_CAPACITY_OVERLOAD', label: 'Kitchen Capacity Overload', desc: 'Severe backlog: queue depth > 8, prep surge' },
-    { id: 'COURIER_ASSIGNMENT_DELAY', label: 'Courier Assignment Delay', desc: 'Allotment search delays due to localized fleet shortage' },
-    { id: 'COURIER_ACCEPTANCE_DELAY', label: 'Courier Acceptance Delay', desc: 'Assigned courier delays acceptance or fails to move' },
-    { id: 'COURIER_REASSIGNMENT', label: 'Courier Reassignment', desc: 'Active rider cancels pickup mid-order requiring backup dispatch' },
-    { id: 'TRAFFIC_CONGESTION', label: 'Traffic Congestion', desc: 'Peak hour gridlock multiplying transit times by 2.2x' },
-    { id: 'LONG_DISTANCE_DELIVERY', label: 'Long Distance Delivery', desc: 'Gourmet order with >10km last mile route' },
-    { id: 'COMBINED_KITCHEN_DELIVERY_DELAY', label: 'Combined Delay', desc: 'Dual bottleneck: kitchen delay and courier allotment stall' },
-    { id: 'HIGH_CANCELLATION_RISK', label: 'High Cancellation Risk', desc: 'Orders matching historical cancellation propensity patterns' },
-    { id: 'FAILED_RECOVERY', label: 'Failed Recovery', desc: 'Unresolvable critical equipment failure (stress case)' },
-    { id: 'SUCCESSFUL_RECOVERY', label: 'Successful Recovery', desc: 'Proactive intervention successfully prevents breach' },
+    { id: 'NORMAL_DELIVERY', label: 'Normal Delivery', desc: 'Baseline operations without unexpected delays' },
+    { id: 'RESTAURANT_PREP_DELAY', label: 'Kitchen Prep Delay', desc: '15-25 mins extra preparation time due to dish complexity' },
+    { id: 'RESTAURANT_CAPACITY_OVERLOAD', label: 'Kitchen Overload', desc: 'Heavy kitchen queue (>8 orders ahead in kitchen)' },
+    { id: 'COURIER_ASSIGNMENT_DELAY', label: 'Courier Search Delay', desc: 'Longer search time due to local courier shortage' },
+    { id: 'COURIER_ACCEPTANCE_DELAY', label: 'Courier Response Delay', desc: 'Assigned courier delays moving towards restaurant' },
+    { id: 'COURIER_REASSIGNMENT', label: 'Courier Reassignment', desc: 'Courier cancelled pickup; backup driver assigned' },
+    { id: 'TRAFFIC_CONGESTION', label: 'Heavy Road Traffic', desc: 'Peak hour congestion doubling transit time' },
+    { id: 'LONG_DISTANCE_DELIVERY', label: 'Long Distance Delivery', desc: 'Specialty restaurant order over a 10+ km route' },
+    { id: 'COMBINED_KITCHEN_DELIVERY_DELAY', label: 'Double Bottleneck', desc: 'Both kitchen delay and road traffic combined' },
+    { id: 'HIGH_CANCELLATION_RISK', label: 'High Cancellation Risk', desc: 'Orders matching historical cancellation patterns' },
+    { id: 'FAILED_RECOVERY', label: 'Severe Breakdown', desc: 'Courier vehicle breakdown requiring emergency handling' },
+    { id: 'SUCCESSFUL_RECOVERY', label: 'Prevented Delay', desc: 'Proactive support successfully prevented late delivery' },
   ];
 
   return (
@@ -205,11 +209,11 @@ export default function SimulationCenterPage() {
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#FC8019]" />
             <h1 className="text-2xl font-black text-[#282C3F] tracking-tight">
-              Simulation Center & Evaluation Engine
+              Try Scenarios & Strategy Comparisons
             </h1>
           </div>
           <p className="text-xs text-[#686B78] mt-1 font-medium">
-            Scientific counterfactual evaluation of Swiggy ResolveAI across 12 operational scenarios and 4 comparative recovery strategies.
+            Test how ResolveAI responds to delivery disruptions, compare recovery strategies, and create demo orders.
           </p>
         </div>
 
@@ -224,7 +228,7 @@ export default function SimulationCenterPage() {
             }`}
           >
             <BarChart3 className="w-3.5 h-3.5" />
-            Phase 5 Counterfactual Experiments
+            Compare Recovery Strategies
           </button>
           <button
             onClick={() => setActiveTab('GENERATOR')}
@@ -235,7 +239,7 @@ export default function SimulationCenterPage() {
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
-            Order Lifecycle Generator
+            Create Demo Orders
           </button>
         </div>
       </div>
@@ -248,7 +252,7 @@ export default function SimulationCenterPage() {
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 1: PHASE 5 COUNTERFACTUAL EXPERIMENTS & BUSINESS KPIS                */}
+      {/* TAB 1: RECOVERY STRATEGY COMPARISON                                        */}
       {/* ========================================================================= */}
       {activeTab === 'EXPERIMENTS' && (
         <div className="space-y-6">
@@ -258,18 +262,15 @@ export default function SimulationCenterPage() {
               <div>
                 <h2 className="text-sm font-bold text-[#282C3F] uppercase tracking-wider flex items-center gap-2">
                   <Sliders className="w-4 h-4 text-[#FC8019]" />
-                  1. Experiment Configuration & Operational Knobs
+                  1. Strategy Comparison Setup
                 </h2>
                 <p className="text-xs text-[#686B78] mt-0.5">
-                  Executes 4 recovery strategies on identical matched-pair orders with deterministic random seeds.
+                  Simulates identical test orders side-by-side to compare business outcomes with and without ResolveAI.
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-200">
-                  SIMULATED
-                </span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-50 text-slate-700 border border-slate-200">
-                  ASSUMPTION
+                  Simulated Comparison
                 </span>
               </div>
             </div>
@@ -278,7 +279,7 @@ export default function SimulationCenterPage() {
               {/* Scenario */}
               <div>
                 <label className="block text-xs font-bold text-[#282C3F] mb-1.5">
-                  Operational Scenario
+                  Delivery Situation to Test
                 </label>
                 <select
                   value={expScenario}
@@ -299,7 +300,7 @@ export default function SimulationCenterPage() {
               {/* Volume */}
               <div>
                 <div className="flex justify-between items-center mb-1">
-                  <label className="text-xs font-bold text-[#282C3F]">Order Batch Size (N)</label>
+                  <label className="text-xs font-bold text-[#282C3F]">Batch Size (Number of Orders)</label>
                   <span className="text-xs font-bold text-[#FC8019]">{expVolume} orders</span>
                 </div>
                 <input
@@ -312,16 +313,16 @@ export default function SimulationCenterPage() {
                   className="w-full accent-[#FC8019] cursor-pointer mt-1"
                 />
                 <div className="flex justify-between text-[10px] text-[#93959F] mt-1">
-                  <span>10 (fast)</span>
+                  <span>10 (quick test)</span>
                   <span>50 (recommended)</span>
-                  <span>100 (high power)</span>
+                  <span>100 (in-depth)</span>
                 </div>
               </div>
 
               {/* Seed */}
               <div>
                 <label className="block text-xs font-bold text-[#282C3F] mb-1.5">
-                  Random Seed (Reproducibility)
+                  Test Random Seed
                 </label>
                 <div className="relative">
                   <Hash className="w-3.5 h-3.5 text-[#93959F] absolute left-3 top-2.5" />
@@ -332,13 +333,13 @@ export default function SimulationCenterPage() {
                     className="w-full pl-8 pr-3 py-1.5 text-xs bg-[#F8F9FA] border border-[#E9ECEE] rounded-xl text-[#282C3F] focus:outline-none focus:border-[#FC8019]"
                   />
                 </div>
-                <p className="text-[11px] text-[#93959F] mt-1">Guarantees exact matched telemetry.</p>
+                <p className="text-[11px] text-[#93959F] mt-1">Guarantees identical simulated orders.</p>
               </div>
 
               {/* Action Effectiveness */}
               <div>
                 <div className="flex justify-between items-center mb-1">
-                  <label className="text-xs font-bold text-[#282C3F]">Action Effectiveness</label>
+                  <label className="text-xs font-bold text-[#282C3F]">Assumed Action Success Rate</label>
                   <span className="text-xs font-bold text-[#60B246]">{Math.round(expEffectiveness * 100)}%</span>
                 </div>
                 <input
@@ -351,9 +352,9 @@ export default function SimulationCenterPage() {
                   className="w-full accent-[#60B246] cursor-pointer mt-1"
                 />
                 <div className="flex justify-between text-[10px] text-[#93959F] mt-1">
-                  <span>40% (degraded)</span>
-                  <span>80% (standard)</span>
-                  <span>100% (ideal)</span>
+                  <span>40% (low)</span>
+                  <span>80% (typical)</span>
+                  <span>100% (perfect)</span>
                 </div>
               </div>
             </div>
@@ -362,7 +363,7 @@ export default function SimulationCenterPage() {
             <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#F4F5F7]">
               <div className="flex items-center gap-2 text-xs text-[#686B78]">
                 <Clock className="w-3.5 h-3.5 text-[#FC8019]" />
-                <span>Assumed Order Value: <b>₹450.00</b> | Ping: ₹5 | Prioritize: ₹15 | Reassign: ₹35 | Voucher: ₹50</span>
+                <span>Assumed Order Value: <b>₹450</b> | Notification: ₹5 | Priority: ₹15 | Reassign: ₹35 | Voucher: ₹50</span>
               </div>
               <div className="flex items-center gap-3">
                 <button
@@ -375,7 +376,7 @@ export default function SimulationCenterPage() {
                   ) : (
                     <ShieldAlert className="w-3.5 h-3.5 text-amber-600" />
                   )}
-                  Run 8-Dimension Stress Test
+                  Run 8-Case Stress Test
                 </button>
                 <button
                   onClick={handleRunExperiment}
@@ -385,12 +386,12 @@ export default function SimulationCenterPage() {
                   {runningExperiment ? (
                     <>
                       <RefreshCw className="w-4 h-4 animate-spin" />
-                      Evaluating 4 Strategies...
+                      Comparing 4 Strategies...
                     </>
                   ) : (
                     <>
                       <PlayCircle className="w-4 h-4" />
-                      Run Counterfactual Experiment
+                      Run Strategy Comparison
                     </>
                   )}
                 </button>
@@ -401,7 +402,7 @@ export default function SimulationCenterPage() {
           {/* Current Experiment Results */}
           {currentExperiment && (
             <div className="space-y-6">
-              {/* Experiment Metadata Banner */}
+              {/* Metadata Banner */}
               <div className="bg-[#FFFDFB] border border-[#FED7AA] rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2">
@@ -410,15 +411,15 @@ export default function SimulationCenterPage() {
                       {currentExperiment.name}
                     </h3>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#FFF5ED] text-[#FC8019] border border-[#FED7AA]">
-                      {currentExperiment.scenario_type}
+                      {currentExperiment.scenario_type.replace(/_/g, ' ')}
                     </span>
                   </div>
                   <p className="text-xs text-[#686B78] mt-0.5">
-                    Evaluated {currentExperiment.num_orders} matched orders across 4 recovery strategies | Random Seed: {currentExperiment.random_seed}
+                    Evaluated {currentExperiment.num_orders} identical test orders across 4 recovery strategies | Random Seed: {currentExperiment.random_seed}
                   </p>
                 </div>
                 <div className="text-[11px] text-[#93959F]">
-                  ID: <code className="text-[#282C3F] font-mono">{(currentExperiment?.id || (currentExperiment as any)?.experiment_id || 'UNKNOWN').slice(0, 8)}</code>
+                  Run ID: <code className="text-[#282C3F] font-mono">{(currentExperiment?.id || (currentExperiment as any)?.experiment_id || 'UNKNOWN').slice(0, 8)}</code>
                 </div>
               </div>
 
@@ -426,21 +427,21 @@ export default function SimulationCenterPage() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-bold text-[#686B78] uppercase tracking-wider">
-                    2. Strategy Comparison Scorecards (Identical Order Conditions)
+                    2. Strategy Performance Comparison (Under Identical Delivery Conditions)
                   </h3>
                   <span className="text-[11px] text-[#93959F]">Side-by-side performance</span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   {[
-                    { key: 'baseline', title: 'Strategy 1: Baseline Monitoring', sub: 'Zero Intervention', color: 'border-slate-200' },
-                    { key: 'rule_based', title: 'Strategy 2: Rule-Based', sub: 'Deterministic Thresholds', color: 'border-blue-200' },
-                    { key: 'ml_assisted', title: 'Strategy 3: ML-Assisted', sub: 'Task A Quantiles + C2 Prob', color: 'border-amber-200' },
-                    { key: 'multi_agent', title: 'Strategy 4: Full ResolveAI', sub: 'Multi-Agent + HITL Gating', color: 'border-[#FC8019] bg-[#FFFDFB]' },
+                    { key: 'baseline', title: '1. No Automated Support', sub: 'Passive Monitoring Only', color: 'border-slate-200' },
+                    { key: 'rule_based', title: '2. Simple Rules Only', sub: 'Fixed Threshold Alerts', color: 'border-blue-200' },
+                    { key: 'ml_assisted', title: '3. Early Risk Alerts', sub: 'Delivery Range + Risk Scoring', color: 'border-amber-200' },
+                    { key: 'multi_agent', title: '4. ResolveAI', sub: 'Proactive Action & Manager Approvals', color: 'border-[#FC8019] bg-[#FFFDFB]' },
                   ].map((s) => {
                     const kpi = currentExperiment.kpi_results[s.key];
                     if (!kpi) return null;
-                    const isMultiAgent = s.key === 'multi_agent';
+                    const isResolveAI = s.key === 'multi_agent';
                     return (
                       <div
                         key={s.key}
@@ -449,9 +450,9 @@ export default function SimulationCenterPage() {
                         <div>
                           <div className="flex items-center justify-between gap-1">
                             <h4 className="text-xs font-black text-[#282C3F] leading-snug">{s.title}</h4>
-                            {isMultiAgent && (
+                            {isResolveAI && (
                               <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-[#FC8019] text-white">
-                                CANDIDATE
+                                RESOLVEAI
                               </span>
                             )}
                           </div>
@@ -467,7 +468,7 @@ export default function SimulationCenterPage() {
                             </span>
                           </div>
                           <div className="bg-[#F8F9FA] rounded-xl p-2.5">
-                            <span className="text-[10px] text-[#93959F] font-semibold block">Avg Duration</span>
+                            <span className="text-[10px] text-[#93959F] font-semibold block">Avg Delivery Time</span>
                             <span className="text-base font-black text-[#282C3F]">
                               {kpi.delivery.average_delivery_duration_min}m
                             </span>
@@ -483,19 +484,19 @@ export default function SimulationCenterPage() {
                             </span>
                           </div>
                           <div className="flex justify-between items-center text-[#686B78]">
-                            <span>Post-Landmark Cancel:</span>
+                            <span>Late Cancellations:</span>
                             <span className="font-bold text-[#282C3F]">
                               {kpi.cancellation.post_landmark_cancellation_rate_pct}%
                             </span>
                           </div>
                           <div className="flex justify-between items-center text-[#686B78]">
-                            <span>Interventions Count:</span>
+                            <span>Support Actions Taken:</span>
                             <span className="font-bold text-[#282C3F]">
                               {kpi.business_efficiency.total_interventions_count}
                             </span>
                           </div>
                           <div className="flex justify-between items-center text-[#686B78]">
-                            <span>Intervention Cost:</span>
+                            <span>Action Cost:</span>
                             <span className="font-bold text-[#282C3F]">
                               ₹{kpi.business_efficiency.simulated_intervention_cost_inr}
                             </span>
@@ -505,7 +506,7 @@ export default function SimulationCenterPage() {
                         {/* Economic Impact */}
                         <div className="pt-3 border-t border-[#F4F5F7]">
                           <div className="flex justify-between items-center">
-                            <span className="text-[11px] font-bold text-[#686B78]">Net Benefit:</span>
+                            <span className="text-[11px] font-bold text-[#686B78]">Estimated Net Benefit:</span>
                             <span className={`text-xs font-black ${
                               kpi.business_efficiency.net_simulated_operational_benefit_inr >= 0
                                 ? 'text-[#60B246]'
@@ -515,7 +516,7 @@ export default function SimulationCenterPage() {
                             </span>
                           </div>
                           <div className="flex justify-between items-center text-[10px] text-[#93959F] mt-0.5">
-                            <span>Losses Avoided:</span>
+                            <span>Saved Refund Losses:</span>
                             <span>₹{kpi.business_efficiency.estimated_cancellation_losses_avoided_inr.toFixed(0)}</span>
                           </div>
                         </div>
@@ -525,17 +526,17 @@ export default function SimulationCenterPage() {
                 </div>
               </div>
 
-              {/* Matched Counterfactual Comparisons & Bootstrap Confidence Intervals */}
+              {/* Matched Comparisons & Difference Highlights */}
               {currentExperiment.counterfactual_comparisons?.comparisons?.length > 0 && (
                 <div className="bg-white rounded-2xl border border-[#E9ECEE] p-6 shadow-sm space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#F4F5F7] pb-3">
                     <div>
                       <h3 className="text-xs font-bold text-[#282C3F] uppercase tracking-wider flex items-center gap-2">
                         <TrendingUp className="w-4 h-4 text-[#FC8019]" />
-                        3. Matched Counterfactual Lift & Statistical Significance
+                        3. Measured Improvement vs Alternative Strategies
                       </h3>
                       <p className="text-xs text-[#686B78] mt-0.5">
-                        Paired differences against reference strategies with 1,000-sample bootstrap 95% confidence intervals and Cohen&apos;s d effect sizes.
+                        Direct differences measured against alternative strategies under identical order conditions.
                       </p>
                     </div>
                     {/* Comparison Selector */}
@@ -550,7 +551,7 @@ export default function SimulationCenterPage() {
                               : 'text-[#686B78] hover:text-[#282C3F]'
                           }`}
                         >
-                          {c.candidate_name.split('—')[0]} vs {c.reference_name.split('—')[0]}
+                          ResolveAI vs {c.reference_name.split('—')[0].replace('Strategy ', 'S')}
                         </button>
                       ))}
                     </div>
@@ -564,225 +565,92 @@ export default function SimulationCenterPage() {
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                           {/* Delta Duration */}
                           <div className="bg-[#F8F9FA] rounded-xl p-4 border border-[#E9ECEE] space-y-2">
-                            <span className="text-[11px] font-bold text-[#686B78] block">Δ Delivery Duration</span>
+                            <span className="text-[11px] font-bold text-[#686B78] block">Time Saved per Order</span>
                             <div className="flex items-baseline gap-2">
                               <span className={`text-xl font-black ${
                                 comp.duration.mean_difference <= 0 ? 'text-[#60B246]' : 'text-[#E23744]'
                               }`}>
-                                {comp.duration.mean_difference > 0 ? '+' : ''}{comp.duration.mean_difference.toFixed(2)} min
+                                {comp.duration.mean_difference <= 0
+                                  ? `${Math.abs(comp.duration.mean_difference).toFixed(1)} mins faster`
+                                  : `+${comp.duration.mean_difference.toFixed(1)} mins slower`}
                               </span>
-                              <span className="text-[11px] text-[#93959F]">mean diff</span>
                             </div>
-                            <div className="text-[11px] text-[#686B78] space-y-0.5 pt-1 border-t border-[#E9ECEE]">
-                              <div>95% Bootstrap CI: [{comp.duration.ci_95[0].toFixed(2)}, {comp.duration.ci_95[1].toFixed(2)}]</div>
-                              <div>Cohen&apos;s d_z: <span className="font-bold">{comp.duration.cohens_d.toFixed(3)}</span></div>
-                              <div>p-value: <span className="font-bold">{comp.duration.p_value.toFixed(4)}</span> {comp.duration.statistically_significant_0_05 ? '(p < 0.05)' : '(not sig)'}</div>
-                            </div>
+                            <p className="text-[11px] text-[#686B78] pt-1">
+                              Average delivery duration improvement across the order batch.
+                            </p>
                           </div>
 
                           {/* Delta On-time */}
                           <div className="bg-[#F8F9FA] rounded-xl p-4 border border-[#E9ECEE] space-y-2">
-                            <span className="text-[11px] font-bold text-[#686B78] block">Δ On-Time Delivery Rate</span>
+                            <span className="text-[11px] font-bold text-[#686B78] block">On-Time Delivery Increase</span>
                             <div className="flex items-baseline gap-2">
                               <span className={`text-xl font-black ${
                                 comp.ontime.difference_pct >= 0 ? 'text-[#60B246]' : 'text-[#E23744]'
                               }`}>
-                                {comp.ontime.difference_pct > 0 ? '+' : ''}{comp.ontime.difference_pct.toFixed(2)}%
+                                {comp.ontime.difference_pct > 0 ? '+' : ''}{comp.ontime.difference_pct.toFixed(1)}%
                               </span>
-                              <span className="text-[11px] text-[#93959F]">abs diff</span>
                             </div>
-                            <div className="text-[11px] text-[#686B78] space-y-0.5 pt-1 border-t border-[#E9ECEE]">
-                              <div>95% Bootstrap CI: [{comp.ontime.ci_95[0].toFixed(2)}%, {comp.ontime.ci_95[1].toFixed(2)}%]</div>
-                              <div>Statistical Significance: <span className="font-bold">{comp.ontime.statistically_significant ? 'Yes (p < 0.05)' : 'No'}</span></div>
-                              <div>p-value: {comp.ontime.p_value.toFixed(4)}</div>
-                            </div>
+                            <p className="text-[11px] text-[#686B78] pt-1">
+                              More orders delivered within promised customer SLA.
+                            </p>
                           </div>
 
                           {/* Delta Cancellation */}
                           <div className="bg-[#F8F9FA] rounded-xl p-4 border border-[#E9ECEE] space-y-2">
-                            <span className="text-[11px] font-bold text-[#686B78] block">Δ Cancellation Rate</span>
+                            <span className="text-[11px] font-bold text-[#686B78] block">Cancellation Reduction</span>
                             <div className="flex items-baseline gap-2">
                               <span className={`text-xl font-black ${
                                 comp.cancellation.difference_pct <= 0 ? 'text-[#60B246]' : 'text-[#E23744]'
                               }`}>
-                                {comp.cancellation.difference_pct > 0 ? '+' : ''}{comp.cancellation.difference_pct.toFixed(2)}%
+                                {comp.cancellation.difference_pct < 0
+                                  ? `${Math.abs(comp.cancellation.difference_pct).toFixed(1)}% fewer`
+                                  : `+${comp.cancellation.difference_pct.toFixed(1)}%`}
                               </span>
-                              <span className="text-[11px] text-[#93959F]">abs diff</span>
                             </div>
-                            <div className="text-[11px] text-[#686B78] space-y-0.5 pt-1 border-t border-[#E9ECEE]">
-                              <div>95% Bootstrap CI: [{comp.cancellation.ci_95[0].toFixed(2)}%, {comp.cancellation.ci_95[1].toFixed(2)}%]</div>
-                              <div>Statistical Significance: <span className="font-bold">{comp.cancellation.statistically_significant ? 'Yes (p < 0.05)' : 'No'}</span></div>
-                              <div>Net Benefit Diff: ₹{comp.net_benefit_difference_inr.toFixed(2)}</div>
-                            </div>
+                            <p className="text-[11px] text-[#686B78] pt-1">
+                              Net financial benefit difference: <b>₹{comp.net_benefit_difference_inr.toFixed(0)}</b>
+                            </p>
                           </div>
                         </div>
 
-                        {/* Caveat Banner */}
-                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-800 flex items-start gap-2">
-                          <HelpCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                          <span>
-                            <b>Causal Claim Caveat:</b> {comp.causal_claim_caveat}
-                          </span>
+                        {/* Technical Statistics Expandable Toggle */}
+                        <div className="pt-2">
+                          <button
+                            type="button"
+                            onClick={() => setShowTechnicalStats(!showTechnicalStats)}
+                            className="text-[11px] font-semibold text-[#FC8019] hover:underline flex items-center gap-1"
+                          >
+                            <span>{showTechnicalStats ? 'Hide Statistical Verification Data' : 'View Statistical Verification Data (Confidence Intervals & p-values)'}</span>
+                            {showTechnicalStats ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                          </button>
+
+                          {showTechnicalStats && (
+                            <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-xl text-[11px] font-mono text-gray-700 space-y-1">
+                              <div>Duration 95% Bootstrap CI: [{comp.duration.ci_95[0].toFixed(2)}, {comp.duration.ci_95[1].toFixed(2)}] min</div>
+                              <div>Duration Cohen&apos;s d: {comp.duration.cohens_d.toFixed(3)} | p-value: {comp.duration.p_value.toFixed(4)}</div>
+                              <div>On-Time 95% Bootstrap CI: [{comp.ontime.ci_95[0].toFixed(2)}%, {comp.ontime.ci_95[1].toFixed(2)}%]</div>
+                              <div>Cancellation 95% Bootstrap CI: [{comp.cancellation.ci_95[0].toFixed(2)}%, {comp.cancellation.ci_95[1].toFixed(2)}%]</div>
+                              <div>Causal Caveat: {comp.causal_claim_caveat}</div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
                   })()}
                 </div>
               )}
-
-              {/* Action Effectiveness Table */}
-              {currentExperiment.action_effectiveness?.actions?.length > 0 && (
-                <div className="bg-white rounded-2xl border border-[#E9ECEE] p-6 shadow-sm space-y-4">
-                  <div className="flex items-center justify-between border-b border-[#F4F5F7] pb-3">
-                    <div>
-                      <h3 className="text-xs font-bold text-[#282C3F] uppercase tracking-wider flex items-center gap-2">
-                        <Activity className="w-4 h-4 text-[#FC8019]" />
-                        4. Autonomous Recovery Action Effectiveness Scorecards
-                      </h3>
-                      <p className="text-xs text-[#686B78] mt-0.5">
-                        Marginal benefit of individual autonomous actions evaluated against matched no-action controls.
-                      </p>
-                    </div>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-200">
-                      SIMULATED
-                    </span>
-                  </div>
-
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-xs text-left">
-                      <thead className="text-[11px] font-bold text-[#93959F] uppercase border-b border-[#E9ECEE] bg-[#F8F9FA]">
-                        <tr>
-                          <th className="py-2.5 px-3">Action Type</th>
-                          <th className="py-2.5 px-3">Trigger %</th>
-                          <th className="py-2.5 px-3">Success %</th>
-                          <th className="py-2.5 px-3">Avg Delay Saved</th>
-                          <th className="py-2.5 px-3">Cancel Reduction</th>
-                          <th className="py-2.5 px-3">Unit Cost</th>
-                          <th className="py-2.5 px-3">Net Benefit</th>
-                          <th className="py-2.5 px-3">ROI Ratio</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[#F4F5F7]">
-                        {currentExperiment.action_effectiveness.actions.map((act) => (
-                          <tr key={act.action_type} className="hover:bg-[#FFFDFB]">
-                            <td className="py-3 px-3">
-                              <span className="font-bold text-[#282C3F] block">{act.action_type}</span>
-                              <span className="text-[10px] text-[#93959F] line-clamp-1">{act.description}</span>
-                            </td>
-                            <td className="py-3 px-3 font-semibold text-[#282C3F]">
-                              {act.trigger_frequency_pct}%
-                            </td>
-                            <td className="py-3 px-3">
-                              <span className={`font-bold ${act.action_success_rate_pct >= 50 ? 'text-[#60B246]' : 'text-[#686B78]'}`}>
-                                {act.action_success_rate_pct}%
-                              </span>
-                            </td>
-                            <td className="py-3 px-3 font-semibold text-[#282C3F]">
-                              {act.average_delay_reduction_min > 0 ? `-${act.average_delay_reduction_min}m` : '0m'}
-                            </td>
-                            <td className="py-3 px-3 font-semibold text-[#60B246]">
-                              {act.cancellation_reduction_pct > 0 ? `-${act.cancellation_reduction_pct}%` : '0%'}
-                            </td>
-                            <td className="py-3 px-3 text-[#686B78]">
-                              ₹{act.unit_cost_inr}
-                            </td>
-                            <td className="py-3 px-3 font-bold text-[#282C3F]">
-                              ₹{act.net_simulated_benefit_inr.toFixed(0)}
-                            </td>
-                            <td className="py-3 px-3 font-bold text-[#FC8019]">
-                              {act.simulated_roi_ratio.toFixed(2)}x
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
-          {/* Stress Test Matrix Results */}
-          {stressResults && (
-            <div className="bg-white rounded-2xl border border-[#E9ECEE] p-6 shadow-sm space-y-4">
-              <div className="flex items-center justify-between border-b border-[#F4F5F7] pb-3">
-                <div>
-                  <h3 className="text-xs font-bold text-[#282C3F] uppercase tracking-wider flex items-center gap-2">
-                    <ShieldAlert className="w-4 h-4 text-amber-600" />
-                    Sensitivity & Operational Stress Test Matrix (8 Dimensions)
-                  </h3>
-                  <p className="text-xs text-[#686B78] mt-0.5">
-                    Evaluates multi-agent recovery system degradation under volume spikes, courier shortages, gridlock, and failure modes.
-                  </p>
-                </div>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-200">
-                  SIMULATED
-                </span>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left">
-                  <thead className="text-[11px] font-bold text-[#93959F] uppercase border-b border-[#E9ECEE] bg-[#F8F9FA]">
-                    <tr>
-                      <th className="py-2.5 px-3">Stress Dimension</th>
-                      <th className="py-2.5 px-3">N</th>
-                      <th className="py-2.5 px-3">Baseline Ontime</th>
-                      <th className="py-2.5 px-3">Multi-Agent Ontime</th>
-                      <th className="py-2.5 px-3">Δ Ontime</th>
-                      <th className="py-2.5 px-3">Δ Cancellation</th>
-                      <th className="py-2.5 px-3">Net Benefit</th>
-                      <th className="py-2.5 px-3">Resilience Verdict</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#F4F5F7]">
-                    {stressResults.map((r) => {
-                      const verdictBg =
-                        r.resilience_verdict === 'ROBUST'
-                          ? 'bg-green-50 text-green-700 border-green-200'
-                          : r.resilience_verdict === 'MODERATELY_DEGRADED'
-                          ? 'bg-amber-50 text-amber-700 border-amber-200'
-                          : 'bg-red-50 text-red-700 border-red-200';
-                      return (
-                        <tr key={r.dimension_key} className="hover:bg-[#FFFDFB]">
-                          <td className="py-3 px-3">
-                            <span className="font-bold text-[#282C3F] block">{r.dimension_name}</span>
-                            <span className="text-[10px] text-[#93959F] line-clamp-1">{r.operational_observation}</span>
-                          </td>
-                          <td className="py-3 px-3 text-[#686B78]">{r.sample_size}</td>
-                          <td className="py-3 px-3 text-[#686B78]">{r.baseline_ontime_pct}%</td>
-                          <td className="py-3 px-3 font-bold text-[#282C3F]">{r.multi_agent_ontime_pct}%</td>
-                          <td className="py-3 px-3 font-bold text-[#60B246]">
-                            {r.ontime_delta_pct > 0 ? `+${r.ontime_delta_pct}%` : `${r.ontime_delta_pct}%`}
-                          </td>
-                          <td className="py-3 px-3 font-bold text-[#60B246]">
-                            {r.cancellation_delta_pct < 0 ? `${r.cancellation_delta_pct}%` : `${r.cancellation_delta_pct}%`}
-                          </td>
-                          <td className="py-3 px-3 font-bold text-[#282C3F]">
-                            ₹{r.net_operational_benefit_inr.toFixed(0)}
-                          </td>
-                          <td className="py-3 px-3">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-black border ${verdictBg}`}>
-                              {r.resilience_verdict}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* Historical Persisted Experiments */}
+          {/* Historical Persisted Strategy Comparisons */}
           <div className="bg-white rounded-2xl border border-[#E9ECEE] p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-[#F4F5F7] pb-3">
               <div>
                 <h3 className="text-xs font-bold text-[#282C3F] uppercase tracking-wider">
-                  5. Historical Persisted Simulation Experiments
+                  4. Past Strategy Comparison Tests
                 </h3>
                 <p className="text-xs text-[#686B78] mt-0.5">
-                  Reproducible experiments stored in database with immutable configurations and seeds.
+                  Archived test comparisons saved with reproducible parameters.
                 </p>
               </div>
               <button
@@ -798,23 +666,22 @@ export default function SimulationCenterPage() {
             {loadingRecent ? (
               <div className="py-8 text-center text-xs text-[#686B78]">
                 <RefreshCw className="w-5 h-5 animate-spin mx-auto text-[#FC8019] mb-1" />
-                Loading experiments...
+                Loading tests...
               </div>
             ) : recentExperiments.length === 0 ? (
               <div className="py-8 text-center text-xs text-[#93959F]">
-                No historical experiments found. Run an experiment above to record benchmark results.
+                No previous tests recorded yet. Run a comparison above to generate benchmark data.
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-xs text-left">
                   <thead className="text-[11px] font-bold text-[#93959F] uppercase border-b border-[#E9ECEE] bg-[#F8F9FA]">
                     <tr>
-                      <th className="py-2 px-3">Experiment Name</th>
-                      <th className="py-2 px-3">Scenario</th>
+                      <th className="py-2 px-3">Test Name</th>
+                      <th className="py-2 px-3">Disruption Type</th>
                       <th className="py-2 px-3">Orders (N)</th>
-                      <th className="py-2 px-3">Seed</th>
-                      <th className="py-2 px-3">Multi-Agent Ontime %</th>
-                      <th className="py-2 px-3">Net Benefit</th>
+                      <th className="py-2 px-3">ResolveAI On-Time %</th>
+                      <th className="py-2 px-3">Estimated Benefit</th>
                       <th className="py-2 px-3">Created At</th>
                     </tr>
                   </thead>
@@ -826,11 +693,10 @@ export default function SimulationCenterPage() {
                           <td className="py-2.5 px-3 font-bold text-[#282C3F]">{e.name}</td>
                           <td className="py-2.5 px-3">
                             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#FFF5ED] text-[#FC8019] border border-[#FED7AA]">
-                              {e.scenario_type}
+                              {e.scenario_type.replace(/_/g, ' ')}
                             </span>
                           </td>
                           <td className="py-2.5 px-3 text-[#686B78]">{e.num_orders}</td>
-                          <td className="py-2.5 px-3 text-[#686B78] font-mono">{e.random_seed}</td>
                           <td className="py-2.5 px-3 font-bold text-[#282C3F]">
                             {multiKpi?.on_time_rate_pct != null ? `${multiKpi.on_time_rate_pct}%` : '—'}
                           </td>
@@ -852,20 +718,20 @@ export default function SimulationCenterPage() {
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 2: ORDER LIFECYCLE GENERATOR (PHASE 1-4)                              */}
+      {/* TAB 2: CREATE DEMO ORDERS                                                 */}
       {/* ========================================================================= */}
       {activeTab === 'GENERATOR' && (
         <form onSubmit={handleRunSimulation} className="space-y-6">
           {/* Scenario Selection Grid */}
           <div className="space-y-3">
             <label className="block text-xs font-bold text-[#686B78] uppercase tracking-wider">
-              1. Select Operational Scenario
+              1. Choose a Delivery Scenario to Test
             </label>
 
             {loadingScenarios ? (
               <div className="py-12 text-center bg-white rounded-2xl border border-[#E9ECEE]">
                 <RefreshCw className="w-6 h-6 animate-spin mx-auto text-[#FC8019] mb-2" />
-                <p className="text-xs font-semibold text-[#686B78]">Loading scenario models...</p>
+                <p className="text-xs font-semibold text-[#686B78]">Loading test scenarios...</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -917,7 +783,7 @@ export default function SimulationCenterPage() {
                       <div className="mt-4 pt-3 border-t border-[#F4F5F7] flex items-center justify-between text-[11px]">
                         <span className="text-[#93959F]">Expected Outcome:</span>
                         <span className="font-bold text-[#282C3F]">
-                          {sc.expected_status}
+                          {sc.expected_status.replace(/_/g, ' ')}
                         </span>
                       </div>
                     </div>
@@ -931,10 +797,10 @@ export default function SimulationCenterPage() {
           <div className="bg-white rounded-2xl border border-[#E9ECEE] p-6 shadow-[0_2px_8px_rgba(40,44,63,0.04)] space-y-6">
             <div className="border-b border-[#F4F5F7] pb-3">
               <h2 className="text-sm font-bold text-[#282C3F] uppercase tracking-wider">
-                2. Generation Parameters
+                2. Order Generation Settings
               </h2>
               <p className="text-xs text-[#686B78] mt-0.5">
-                Configure batch volume and deterministic random seed for raw order generation
+                Choose how many demo orders to create for live testing
               </p>
             </div>
 
@@ -943,7 +809,7 @@ export default function SimulationCenterPage() {
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <label className="text-xs font-bold text-[#282C3F]">
-                    Orders Batch Size
+                    Number of Demo Orders
                   </label>
                   <span className="text-xs font-bold px-2 py-0.5 rounded bg-[#FFF5ED] text-[#FC8019] border border-[#FED7AA]">
                     {orderCount} {orderCount === 1 ? 'Order' : 'Orders'}
@@ -958,16 +824,16 @@ export default function SimulationCenterPage() {
                   className="w-full accent-[#FC8019] cursor-pointer"
                 />
                 <div className="flex justify-between text-[11px] text-[#93959F] mt-1">
-                  <span>1 order (inspect)</span>
-                  <span>10 orders</span>
-                  <span>20 orders (stress test)</span>
+                  <span>1 order (single inspect)</span>
+                  <span>5 orders</span>
+                  <span>20 orders (batch test)</span>
                 </div>
               </div>
 
               {/* Reproducible Seed Input */}
               <div>
                 <label className="block text-xs font-bold text-[#282C3F] mb-1.5">
-                  Deterministic Random Seed (Optional)
+                  Reproducible Seed Number (Optional)
                 </label>
                 <div className="relative">
                   <Hash className="w-4 h-4 text-[#93959F] absolute left-3 top-2.5" />
@@ -975,12 +841,12 @@ export default function SimulationCenterPage() {
                     type="number"
                     value={seed}
                     onChange={(e) => setSeed(e.target.value)}
-                    placeholder="e.g. 42 (leave blank for random runtime seed)"
+                    placeholder="e.g. 42 (leave empty for random)"
                     className="w-full pl-9 pr-4 py-2 bg-[#F8F9FA] focus:bg-white text-xs text-[#282C3F] placeholder-[#93959F] rounded-xl border border-[#E9ECEE] focus:outline-none focus:border-[#FC8019]"
                   />
                 </div>
                 <p className="text-[11px] text-[#93959F] mt-1">
-                  Providing a fixed seed guarantees identical chronological events across runs.
+                  Optional: using the same seed number generates identical test conditions.
                 </p>
               </div>
             </div>
@@ -995,12 +861,12 @@ export default function SimulationCenterPage() {
                 {simulating ? (
                   <>
                     <RefreshCw className="w-4 h-4 animate-spin" />
-                    Executing Scenario Engine...
+                    Creating Demo Orders...
                   </>
                 ) : (
                   <>
                     <PlayCircle className="w-4 h-4" />
-                    Generate Simulated Orders
+                    Generate Demo Orders
                   </>
                 )}
               </button>
@@ -1013,21 +879,21 @@ export default function SimulationCenterPage() {
               <div className="flex items-center justify-between pb-3 border-b border-[#F4F5F7]">
                 <div>
                   <h3 className="text-sm font-bold text-[#282C3F]">
-                    Simulation Run Completed
+                    Demo Orders Created
                   </h3>
                   <p className="text-xs text-[#686B78] mt-0.5">
-                    Batch Run ID: <span className="font-mono text-[#FC8019]">{result.demo_run_id}</span>
+                    Batch Reference ID: <span className="font-mono text-[#FC8019]">{result.demo_run_id}</span>
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-[#F2FBF2] text-[#60B246] border border-[#C6E7C6]">
-                    {result.generated_count} Orders Created
+                    {result.generated_count} Demo Order(s)
                   </span>
                   <Link
                     href={`/orders?demo_run_id=${result.demo_run_id}`}
                     className="text-xs font-bold px-3 py-1.5 rounded-xl bg-[#FC8019] text-white hover:bg-[#e67312] transition-colors flex items-center gap-1"
                   >
-                    View in Orders Console
+                    View in All Orders
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
@@ -1064,7 +930,7 @@ export default function SimulationCenterPage() {
                         href={`/orders/${o.id}`}
                         className="text-[#FC8019] font-bold hover:underline flex items-center gap-0.5"
                       >
-                        Inspect
+                        View Details
                         <ChevronRight className="w-3 h-3" />
                       </Link>
                     </div>

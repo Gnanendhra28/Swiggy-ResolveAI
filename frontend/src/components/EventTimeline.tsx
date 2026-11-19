@@ -26,6 +26,44 @@ interface EventTimelineProps {
 export const EventTimeline: React.FC<EventTimelineProps> = ({ events }) => {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
+  const getEventFriendlyTitle = (type: string) => {
+    const t = type.toUpperCase();
+    switch (t) {
+      case 'ORDER_PLACED':
+        return 'Order Received from Customer';
+      case 'RESTAURANT_ACCEPTED':
+        return 'Restaurant Confirmed Order';
+      case 'PREPARATION_STARTED':
+        return 'Kitchen Began Preparation';
+      case 'FOOD_READY':
+        return 'Food Packed & Ready for Pickup';
+      case 'RIDER_ASSIGNED':
+        return 'Delivery Partner Assigned';
+      case 'RIDER_ARRIVED_AT_STORE':
+        return 'Delivery Partner Reached Merchant';
+      case 'ORDER_PICKED_UP':
+        return 'Order Picked Up & On the Way';
+      case 'KITCHEN_DELAY_DETECTED':
+        return 'Kitchen Preparation Delay Identified';
+      case 'COURIER_ALLOTMENT_TIMEOUT':
+        return 'Extended Delivery Partner Search';
+      case 'TRAFFIC_CONGESTION_DETECTED':
+        return 'Transit Delay / Heavy Road Traffic';
+      case 'RECOVERY_TRIGGERED':
+        return 'Automated Support Action Suggested';
+      case 'RIDER_REASSIGNED':
+        return 'Delivery Partner Reassigned';
+      case 'WALLET_CREDIT_ISSUED':
+        return 'Apology Credit Issued to Customer';
+      case 'CUSTOMER_SUPPORT_INQUIRY':
+        return 'Customer Contacted Support';
+      case 'ORDER_DELIVERED':
+        return 'Order Delivered Successfully';
+      default:
+        return t.replace(/_/g, ' ');
+    }
+  };
+
   const getEventConfig = (type: string, isLast: boolean) => {
     const t = type.toUpperCase();
 
@@ -83,7 +121,7 @@ export const EventTimeline: React.FC<EventTimelineProps> = ({ events }) => {
         badgeBorder: 'border-[#C8E6C9]',
       };
     }
-    if (t.includes('RECOVERY') || t.includes('REASSIGNED')) {
+    if (t.includes('RECOVERY') || t.includes('REASSIGNED') || t.includes('WALLET_CREDIT')) {
       return {
         icon: <RefreshCw className="w-4 h-4 text-white" />,
         nodeBg: 'bg-[#FC8019]',
@@ -138,13 +176,13 @@ export const EventTimeline: React.FC<EventTimelineProps> = ({ events }) => {
     <div className="bg-white rounded-2xl border border-[#E9ECEE] p-6 shadow-[0_2px_8px_rgba(40,44,63,0.04)]">
       <div className="flex items-center justify-between pb-4 mb-6 border-b border-[#F4F5F7]">
         <div>
-          <h3 className="text-base font-bold text-[#282C3F]">Live Delivery & Event Timeline</h3>
+          <h3 className="text-base font-bold text-[#282C3F]">Order Progress & Activity Timeline</h3>
           <p className="text-xs text-[#686B78] mt-0.5">
-            Chronological milestone ledger and autonomous recovery interventions
+            Chronological log of restaurant preparation, courier transit, and support actions
           </p>
         </div>
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-[#FFF5ED] text-[#FC8019] border border-[#FED7AA]">
-          {events.length} Milestones
+          {events.length} Milestones Recorded
         </span>
       </div>
 
@@ -156,6 +194,8 @@ export const EventTimeline: React.FC<EventTimelineProps> = ({ events }) => {
           const ts = formatTimestamp(ev.event_timestamp);
           const meta = (ev.metadata || (ev as any).event_metadata || {}) as Record<string, any>;
           const hasMeta = meta && Object.keys(meta).length > 0;
+          const isObserved = ev.data_source === 'PUBLIC_HISTORICAL';
+          const isDemo = ev.data_source === 'SYNTHETIC';
 
           return (
             <div key={ev.id || idx} className="relative flex items-start gap-4">
@@ -171,12 +211,12 @@ export const EventTimeline: React.FC<EventTimelineProps> = ({ events }) => {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-bold text-[#282C3F]">
-                      {ev.event_type.replace(/_/g, ' ')}
+                      {getEventFriendlyTitle(ev.event_type)}
                     </span>
                     <span
-                      className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${config.badgeBg} ${config.badgeText} ${config.badgeBorder}`}
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${config.badgeBg} ${config.badgeText} ${config.badgeBorder}`}
                     >
-                      {ev.data_source || 'SYNTHETIC'}
+                      {isDemo ? 'Demo Event' : isObserved ? 'Historical Record' : 'Live Event'}
                     </span>
                   </div>
 
@@ -194,22 +234,22 @@ export const EventTimeline: React.FC<EventTimelineProps> = ({ events }) => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-xs">
                       {meta.delay_minutes !== undefined && (
                         <div className="text-[#D97706] font-medium bg-[#FFF8E6] px-2 py-1 rounded border border-[#FDE68A]">
-                          Delay: +{meta.delay_minutes} mins
+                          Extra Delay: +{meta.delay_minutes} mins
                         </div>
                       )}
                       {meta.reason && (
                         <div className="text-[#686B78] bg-white px-2 py-1 rounded border border-[#E9ECEE]">
-                          Reason: <span className="text-[#282C3F] font-semibold">{meta.reason}</span>
+                          Observation: <span className="text-[#282C3F] font-semibold">{meta.reason}</span>
                         </div>
                       )}
                       {meta.rider_name && (
                         <div className="text-[#686B78] bg-white px-2 py-1 rounded border border-[#E9ECEE]">
-                          Rider: <span className="text-[#282C3F] font-semibold">{meta.rider_name}</span>
+                          Delivery Partner: <span className="text-[#282C3F] font-semibold">{meta.rider_name}</span>
                         </div>
                       )}
                       {meta.resolution && (
                         <div className="text-[#60B246] font-medium bg-[#EDF7EC] px-2 py-1 rounded border border-[#C8E6C9]">
-                          Resolution: {meta.resolution}
+                          Outcome: {meta.resolution}
                         </div>
                       )}
                       {meta.note && (
@@ -229,13 +269,13 @@ export const EventTimeline: React.FC<EventTimelineProps> = ({ events }) => {
                       )}
                     </div>
 
-                    {/* Expandable Raw Metadata */}
+                    {/* Expandable Technical Metadata */}
                     <button
                       type="button"
                       onClick={() => setExpandedIndex(isExpanded ? null : idx)}
                       className="mt-2 text-[11px] font-semibold text-[#FC8019] hover:text-[#E27315] flex items-center gap-1"
                     >
-                      <span>{isExpanded ? 'Hide Technical Metadata' : 'View Technical Metadata'}</span>
+                      <span>{isExpanded ? 'Hide Raw Details' : 'View Raw Details'}</span>
                       {isExpanded ? (
                         <ChevronUp className="w-3.5 h-3.5" />
                       ) : (

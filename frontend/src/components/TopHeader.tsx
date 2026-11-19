@@ -7,7 +7,6 @@ import {
   Menu,
   Search,
   PlayCircle,
-  Bell,
   Activity,
   CheckCircle2,
   Clock,
@@ -42,7 +41,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
           text: 'text-[#60B246]',
           border: 'border-[#C8E6C9]',
           dot: 'bg-[#60B246]',
-          label: 'Live Operations',
+          label: 'System Active',
         };
       case 'degraded':
         return {
@@ -50,7 +49,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
           text: 'text-[#D97706]',
           border: 'border-[#FDE68A]',
           dot: 'bg-[#D97706]',
-          label: 'Degraded',
+          label: 'Service Slow',
         };
       case 'offline':
       default:
@@ -59,6 +58,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
           text: 'text-[#E23744]',
           border: 'border-[#FECDD3]',
           dot: 'bg-[#E23744]',
+          label: 'Offline',
         };
     }
   };
@@ -91,7 +91,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Quick search orders by ID, restaurant, or customer..."
+          placeholder="Search orders by ID, restaurant, or customer name..."
           className="w-full pl-9 pr-4 py-2 bg-[#F8F9FA] hover:bg-[#F4F5F7] focus:bg-white text-xs text-[#282C3F] placeholder-[#93959F] rounded-xl border border-[#E9ECEE] focus:outline-none focus:border-[#FC8019] focus:ring-1 focus:ring-[#FC8019] transition-all"
         />
       </form>
@@ -113,7 +113,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
           className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#FC8019] hover:bg-[#E27315] text-white shadow-sm shadow-orange-500/20 hover:shadow transition-all"
         >
           <PlayCircle className="w-3.5 h-3.5" />
-          <span>Simulate</span>
+          <span>Try Scenarios</span>
         </Link>
       </div>
     </header>

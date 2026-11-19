@@ -17,6 +17,8 @@ import {
   Brain,
   HardDrive,
   Hash,
+  ChevronDown,
+  Info,
 } from 'lucide-react';
 import { fetchHealth } from '@/lib/api';
 import { SystemHealth } from '@/lib/types';
@@ -87,20 +89,20 @@ export default function SystemHealthPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
         <div>
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#FC8019]" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#60B246]" />
             <h1 className="text-2xl font-black text-[#282C3F] tracking-tight">
-              Operational Health & Infrastructure Diagnostics
+              System Performance & Data Connection Status
             </h1>
           </div>
           <p className="text-xs text-[#686B78] mt-1 font-medium">
-            Granular real-time telemetry across Application, Database Infrastructure, AI Provider, and ML Model Artifacts.
+            Live status of order data connections, prediction services, and response speeds.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           {lastCheck && (
             <span className="text-[11px] text-[#93959F] font-mono">
-              Checked: {lastCheck}
+              Last checked: {lastCheck}
             </span>
           )}
           <button
@@ -109,7 +111,7 @@ export default function SystemHealthPage() {
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#FC8019] hover:bg-[#E27315] text-xs font-bold text-white shadow-sm shadow-orange-500/20 hover:shadow transition-all disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span>Refresh Diagnostics</span>
+            <span>Check Connections Now</span>
           </button>
         </div>
       </div>
@@ -119,7 +121,7 @@ export default function SystemHealthPage() {
         <div className="rounded-2xl border border-[#FECDD3] bg-[#FDF0F1] p-4 text-[#E23744] space-y-1">
           <div className="flex items-center gap-2 font-bold text-xs">
             <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-            <span>Connection Failure</span>
+            <span>Connection Notice</span>
           </div>
           <p className="text-xs">{error}</p>
         </div>
@@ -127,63 +129,63 @@ export default function SystemHealthPage() {
 
       {/* 4 Pillars Operational Health Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Pillar 1: Application Health */}
+        {/* Pillar 1: Application Server */}
         <div className="bg-white rounded-2xl border border-[#E9ECEE] p-5 shadow-[0_2px_8px_rgba(40,44,63,0.04)] space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-[#686B78] uppercase tracking-wider flex items-center gap-1.5">
               <Server className="w-4 h-4 text-[#FC8019]" />
-              Application
+              Application Server
             </span>
             <span className={`w-2.5 h-2.5 rounded-full ${getStatusColor(health?.status)}`} />
           </div>
 
           <div>
             <p className="text-lg font-black text-[#282C3F] capitalize">
-              {health?.application?.status || health?.status || (error ? 'Offline' : 'Checking...')}
+              {health?.application?.status === 'ready' || health?.status === 'healthy' ? 'Operational' : (error ? 'Offline' : 'Checking...')}
             </p>
             <p className="text-xs text-[#686B78] mt-0.5">
-              FastAPI • Python 3.12
+              Order Processing API Service
             </p>
           </div>
 
           <div className="pt-3 border-t border-[#F4F5F7] text-xs space-y-1">
             <div className="flex justify-between items-center text-[#686B78]">
-              <span>Env:</span>
-              <span className="font-bold text-[#282C3F] uppercase text-[10px]">
-                {health?.environment || 'development'}
+              <span>Response Speed:</span>
+              <span className="font-mono font-bold text-[#282C3F]">
+                {pingLatency !== null ? `${pingLatency} ms` : '—'}
               </span>
             </div>
             <div className="flex justify-between items-center text-[#686B78]">
-              <span>HTTP Ping:</span>
-              <span className="font-mono font-bold text-[#282C3F]">
-                {pingLatency !== null ? `${pingLatency} ms` : '—'}
+              <span>Mode:</span>
+              <span className="font-bold text-[#282C3F] capitalize text-[10px]">
+                {health?.environment || 'Active'}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Pillar 2: Infrastructure Health */}
+        {/* Pillar 2: Data Connection Status */}
         <div className="bg-white rounded-2xl border border-[#E9ECEE] p-5 shadow-[0_2px_8px_rgba(40,44,63,0.04)] space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-[#686B78] uppercase tracking-wider flex items-center gap-1.5">
               <Database className="w-4 h-4 text-[#FC8019]" />
-              Infrastructure
+              Data Connection
             </span>
             <span className={`w-2.5 h-2.5 rounded-full ${getStatusColor(health?.infrastructure?.database_status || health?.database)}`} />
           </div>
 
           <div>
             <p className="text-lg font-black text-[#282C3F] capitalize">
-              {health?.infrastructure?.database_status || health?.database || 'Disconnected'}
+              {health?.infrastructure?.database_status === 'connected' || health?.database === 'connected' ? 'Connected' : 'Disconnected'}
             </p>
-            <p className="text-xs text-[#686B78] mt-0.5 uppercase">
-              Engine: {health?.infrastructure?.database_engine || 'SQLite'}
+            <p className="text-xs text-[#686B78] mt-0.5">
+              PostgreSQL Data Store
             </p>
           </div>
 
           <div className="pt-3 border-t border-[#F4F5F7] text-xs space-y-1">
             <div className="flex justify-between items-center text-[#686B78]">
-              <span>DB Latency:</span>
+              <span>Query Latency:</span>
               <span className="font-mono font-bold text-[#282C3F]">
                 {health?.infrastructure?.database_latency_ms != null
                   ? `${health.infrastructure.database_latency_ms} ms`
@@ -191,139 +193,184 @@ export default function SystemHealthPage() {
               </span>
             </div>
             <div className="flex justify-between items-center text-[#686B78]">
-              <span>Migrations:</span>
-              <span className="font-bold text-[#60B246] text-[10px] bg-[#EDF7EC] px-1.5 py-0.2 rounded border border-[#C8E6C9]">
-                Head (005)
+              <span>Database Schema:</span>
+              <span className="font-bold text-[#60B246] text-[10px] bg-[#EDF7EC] px-1.5 py-0.5 rounded border border-[#C8E6C9]">
+                Up to Date
               </span>
             </div>
           </div>
         </div>
 
-        {/* Pillar 3: AI Provider Health */}
+        {/* Pillar 3: AI Assistant Status */}
         <div className="bg-white rounded-2xl border border-[#E9ECEE] p-5 shadow-[0_2px_8px_rgba(40,44,63,0.04)] space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-[#686B78] uppercase tracking-wider flex items-center gap-1.5">
               <Bot className="w-4 h-4 text-[#FC8019]" />
-              AI Provider
+              AI Assistant
             </span>
             <span className={`w-2.5 h-2.5 rounded-full ${getStatusColor(health?.ai_provider?.status || 'fallback_ready')}`} />
           </div>
 
           <div>
             <p className="text-lg font-black text-[#282C3F] capitalize">
-              {health?.ai_provider?.status === 'live' ? 'Live Gemini' : 'Fallback Standby'}
+              {health?.ai_provider?.status === 'live' ? 'Connected (Gemini)' : 'Standby (Smart Rules)'}
             </p>
             <p className="text-xs text-[#686B78] mt-0.5 truncate">
-              {health?.ai_provider?.model_name || 'gemini-1.5-flash'}
+              {health?.ai_provider?.model_name ? `AI Model: ${health.ai_provider.model_name}` : 'Autonomous Rule Engine'}
             </p>
           </div>
 
           <div className="pt-3 border-t border-[#F4F5F7] text-xs space-y-1">
             <div className="flex justify-between items-center text-[#686B78]">
-              <span>Fallback Ready:</span>
+              <span>Automatic Fallback:</span>
               <span className="font-bold text-[#60B246] text-[10px]">
-                Active (Deterministic)
+                Always Ready
               </span>
             </div>
             <div className="flex justify-between items-center text-[#686B78]">
-              <span>HITL Gating:</span>
+              <span>Manager Approvals:</span>
               <span className="font-bold text-[#FC8019] text-[10px]">Enforced</span>
             </div>
           </div>
         </div>
 
-        {/* Pillar 4: ML Artifact Health */}
+        {/* Pillar 4: Prediction Engine Status */}
         <div className="bg-white rounded-2xl border border-[#E9ECEE] p-5 shadow-[0_2px_8px_rgba(40,44,63,0.04)] space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-[#686B78] uppercase tracking-wider flex items-center gap-1.5">
               <Brain className="w-4 h-4 text-[#FC8019]" />
-              ML Artifacts
+              Prediction Engine
             </span>
             <span className={`w-2.5 h-2.5 rounded-full ${getStatusColor(health?.ml_artifacts?.status || 'ready')}`} />
           </div>
 
           <div>
             <p className="text-lg font-black text-[#282C3F] capitalize">
-              {health?.ml_artifacts?.status || 'Ready'}
+              {health?.ml_artifacts?.status === 'ready' ? 'Ready & Calibrated' : 'Checking...'}
             </p>
             <p className="text-xs text-[#686B78] mt-0.5">
-              Registry v{health?.ml_artifacts?.model_version || '2.5.0'}
+              Delivery & Risk Models
             </p>
           </div>
 
           <div className="pt-3 border-t border-[#F4F5F7] text-xs space-y-1">
             <div className="flex justify-between items-center text-[#686B78]">
-              <span>Task A (Quantiles):</span>
-              <span className="font-bold text-[#60B246] text-[10px]">P10/P50/P90</span>
+              <span>Estimated Delivery:</span>
+              <span className="font-bold text-[#60B246] text-[10px]">Active (Range)</span>
             </div>
             <div className="flex justify-between items-center text-[#686B78]">
-              <span>Task C2 (Calibrated):</span>
-              <span className="font-bold text-[#60B246] text-[10px]">Isotonic Fitted</span>
+              <span>Cancellation Risk:</span>
+              <span className="font-bold text-[#60B246] text-[10px]">Calibrated</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Deep Component Diagnostics Table */}
-      <div className="bg-white rounded-2xl border border-[#E9ECEE] shadow-[0_2px_8px_rgba(40,44,63,0.04)] overflow-hidden">
-        <div className="p-5 border-b border-[#F4F5F7] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <h2 className="text-sm font-bold text-[#282C3F] uppercase tracking-wider">
-              System Component Diagnostic Specifications
+      {/* User-Friendly Overview Card */}
+      <div className="bg-white rounded-2xl border border-[#E9ECEE] p-6 shadow-[0_2px_8px_rgba(40,44,63,0.04)]">
+        <div className="flex items-start gap-4">
+          <div className="p-3 rounded-2xl bg-orange-50 border border-orange-100 flex-shrink-0">
+            <ShieldCheck className="w-6 h-6 text-[#FC8019]" />
+          </div>
+          <div className="space-y-1 flex-1">
+            <h2 className="text-base font-bold text-[#282C3F]">
+              How ResolveAI Safeguards Restaurant and Delivery Operations
             </h2>
-            <p className="text-xs text-[#686B78] mt-0.5">
-              Verified environment bindings, security boundaries, and telemetry hooks
+            <p className="text-xs text-[#686B78] leading-relaxed">
+              ResolveAI continuously listens to incoming order updates, kitchen preparation progress, and courier road conditions. When an unexpected delay occurs, the system evaluates the situation against preset business safety rules. High-impact remedies (like customer apology discounts or rider reassignments) are held for supervisor review, ensuring no unapproved actions are taken automatically.
             </p>
-          </div>
-          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-200">
-            PHASE 6 VERIFIED
-          </span>
-        </div>
-
-        <div className="divide-y divide-[#F4F5F7] text-xs">
-          <div className="p-4 flex items-center justify-between hover:bg-[#FBFBFC]">
-            <span className="font-semibold text-[#686B78]">Application Name</span>
-            <span className="font-bold text-[#282C3F]">{health?.application?.name || 'Swiggy ResolveAI'}</span>
-          </div>
-
-          <div className="p-4 flex items-center justify-between hover:bg-[#FBFBFC]">
-            <span className="font-semibold text-[#686B78]">Release SemVer</span>
-            <span className="font-mono text-[#282C3F]">{health?.version || '0.1.0'}</span>
-          </div>
-
-          <div className="p-4 flex items-center justify-between hover:bg-[#FBFBFC]">
-            <span className="font-semibold text-[#686B78]">Backend API Gateway</span>
-            <span className="font-mono text-[#FC8019]">
-              {process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}
-            </span>
-          </div>
-
-          <div className="p-4 flex items-center justify-between hover:bg-[#FBFBFC]">
-            <span className="font-semibold text-[#686B78]">AI Provider Integration</span>
-            <div className="text-right">
-              <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${getStatusBadge(health?.ai_provider?.status)}`}>
-                {health?.ai_provider?.details || 'Deterministic Synthesizer Active'}
+            <div className="flex flex-wrap gap-4 pt-2 text-[11px] text-[#282C3F] font-medium">
+              <span className="flex items-center gap-1.5 text-[#60B246]">
+                <CheckCircle2 className="w-3.5 h-3.5" /> High-impact actions require manager approval
+              </span>
+              <span className="flex items-center gap-1.5 text-[#60B246]">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Duplicate action protection active
+              </span>
+              <span className="flex items-center gap-1.5 text-[#60B246]">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Demo environment: no real courier dispatch
               </span>
             </div>
           </div>
-
-          <div className="p-4 flex items-center justify-between hover:bg-[#FBFBFC]">
-            <span className="font-semibold text-[#686B78]">ML Artifact Directory</span>
-            <span className="font-mono text-[#282C3F]">{health?.ml_artifacts?.artifacts_dir || 'data/artifacts/models/phase_2_5'}</span>
-          </div>
-
-          <div className="p-4 flex items-center justify-between hover:bg-[#FBFBFC]">
-            <span className="font-semibold text-[#686B78]">Server Timestamp (UTC)</span>
-            <span className="font-mono text-[#282C3F]">{health?.timestamp || '—'}</span>
-          </div>
-
-          <div className="p-4 flex items-center justify-between hover:bg-[#FBFBFC]">
-            <span className="font-semibold text-[#686B78]">Provenance Boundary</span>
-            <span className="font-bold text-[#60B246] bg-[#EDF7EC] px-2 py-0.5 rounded border border-[#C8E6C9]">
-              Strict SYNTHETIC & PUBLIC_HISTORICAL Isolation (Zero Real Swiggy Dispatch)
-            </span>
-          </div>
         </div>
+      </div>
+
+      {/* Expandable Technical Diagnostics Drawer */}
+      <div className="bg-white rounded-2xl border border-[#E9ECEE] shadow-[0_2px_8px_rgba(40,44,63,0.04)] overflow-hidden">
+        <details className="group">
+          <summary className="p-5 flex items-center justify-between cursor-pointer hover:bg-[#FBFBFC] transition-colors select-none">
+            <div className="flex items-center gap-2">
+              <Activity className="w-4 h-4 text-[#FC8019]" />
+              <div>
+                <h3 className="text-xs font-bold text-[#282C3F] uppercase tracking-wider">
+                  Technical System Diagnostics & Model Specifications
+                </h3>
+                <p className="text-[11px] text-[#686B78] mt-0.5">
+                  Detailed model versions, API endpoints, calibration specifications, and server metrics for technical inspection.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold text-[#FC8019] group-open:hidden">
+                Click to inspect
+              </span>
+              <ChevronDown className="w-4 h-4 text-[#93959F] group-open:rotate-180 transition-transform" />
+            </div>
+          </summary>
+
+          <div className="divide-y divide-[#F4F5F7] border-t border-[#F4F5F7] text-xs">
+            <div className="p-4 flex items-center justify-between hover:bg-[#FBFBFC]">
+              <span className="font-semibold text-[#686B78]">Application Core Service</span>
+              <span className="font-bold text-[#282C3F]">{health?.application?.name || 'Swiggy ResolveAI'}</span>
+            </div>
+
+            <div className="p-4 flex items-center justify-between hover:bg-[#FBFBFC]">
+              <span className="font-semibold text-[#686B78]">Backend API Gateway</span>
+              <span className="font-mono text-[#FC8019]">
+                {process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}
+              </span>
+            </div>
+
+            <div className="p-4 flex items-center justify-between hover:bg-[#FBFBFC]">
+              <span className="font-semibold text-[#686B78]">AI Model Provider</span>
+              <div className="text-right">
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${getStatusBadge(health?.ai_provider?.status)}`}>
+                  {health?.ai_provider?.details || 'Deterministic Rule Synthesizer Standby'}
+                </span>
+              </div>
+            </div>
+
+            <div className="p-4 flex items-center justify-between hover:bg-[#FBFBFC]">
+              <span className="font-semibold text-[#686B78]">Delivery Time Model (Task A)</span>
+              <span className="font-mono text-[#282C3F]">
+                LightGBM Regressor • Quantiles P10, P50, P90 • Pinball Loss Evaluated
+              </span>
+            </div>
+
+            <div className="p-4 flex items-center justify-between hover:bg-[#FBFBFC]">
+              <span className="font-semibold text-[#686B78]">Cancellation Risk Model (Task C2)</span>
+              <span className="font-mono text-[#282C3F]">
+                LightGBM Classifier • Post-Hoc Isotonic Probability Calibration • ROC-AUC & Brier Score Validated
+              </span>
+            </div>
+
+            <div className="p-4 flex items-center justify-between hover:bg-[#FBFBFC]">
+              <span className="font-semibold text-[#686B78]">Model Artifacts Path</span>
+              <span className="font-mono text-[#282C3F]">{health?.ml_artifacts?.artifacts_dir || 'data/artifacts/models/phase_2_5'}</span>
+            </div>
+
+            <div className="p-4 flex items-center justify-between hover:bg-[#FBFBFC]">
+              <span className="font-semibold text-[#686B78]">Server Timestamp (UTC)</span>
+              <span className="font-mono text-[#282C3F]">{health?.timestamp || '—'}</span>
+            </div>
+
+            <div className="p-4 flex items-center justify-between hover:bg-[#FBFBFC]">
+              <span className="font-semibold text-[#686B78]">Safety Boundary & Data Provenance</span>
+              <span className="font-bold text-[#60B246] bg-[#EDF7EC] px-2 py-0.5 rounded border border-[#C8E6C9]">
+                Simulated & Historical Data Isolation (No Real Swiggy Order Dispatch)
+              </span>
+            </div>
+          </div>
+        </details>
       </div>
     </div>
   );

@@ -9,10 +9,9 @@ import {
   Sparkles,
   PlayCircle,
   Activity,
+  History,
   X,
-  ShieldCheck,
   ChevronRight,
-  Radio,
 } from 'lucide-react';
 import { SwiggyLogo } from './SwiggyLogo';
 
@@ -37,27 +36,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
       badge: null,
     },
     {
-      label: 'Orders',
+      label: 'All Orders',
       href: '/orders',
       icon: ShoppingBag,
       badge: null,
     },
     {
-      label: 'Order Intelligence',
+      label: 'AI Insights',
       href: '/intelligence',
       icon: Sparkles,
-      badge: 'Phase 3',
+      badge: null,
     },
     {
-      label: 'Simulation Center',
+      label: 'Try Scenarios',
       href: '/simulation',
       icon: PlayCircle,
       badge: null,
     },
     {
-      label: 'System Health',
+      label: 'Performance',
       href: '/health',
       icon: Activity,
+      badge: null,
+    },
+    {
+      label: 'Activity History',
+      href: '/intelligence#activity-history',
+      icon: History,
       badge: null,
     },
   ];
@@ -71,6 +76,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
       case 'offline':
       default:
         return 'bg-[#E23744]';
+    }
+  };
+
+  const getStatusLabel = () => {
+    switch (systemStatus) {
+      case 'healthy':
+        return 'System Online';
+      case 'degraded':
+        return 'System Degraded';
+      case 'offline':
+      default:
+        return 'System Offline';
     }
   };
 
@@ -108,10 +125,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* Subtitle tag */}
           <div className="px-5 py-3 bg-[#FBFBFC] border-b border-[#F4F5F7]">
             <p className="text-[11px] font-semibold text-[#686B78] uppercase tracking-wider">
-              Autonomous Delivery Recovery
+              Automated Delivery Support
             </p>
             <p className="text-[10px] text-[#93959F] mt-0.5">
-              Proactive food-delivery operations platform
+              Smart order monitoring and proactive issue resolution
             </p>
           </div>
 
@@ -119,10 +136,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <nav className="p-3 space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
-              const isActive =
-                item.href === '/'
-                  ? pathname === '/'
-                  : pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+              const isHashMatch = item.href.includes('#');
+              const isActive = isHashMatch
+                ? false
+                : item.href === '/'
+                ? pathname === '/'
+                : pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
 
               return (
                 <Link
@@ -172,8 +191,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   className={`relative inline-flex rounded-full h-2.5 w-2.5 ${getStatusColor()}`}
                 />
               </span>
-              <span className="text-[11px] font-semibold text-[#282C3F] capitalize">
-                System {systemStatus}
+              <span className="text-[11px] font-semibold text-[#282C3F]">
+                {getStatusLabel()}
               </span>
             </div>
             <ChevronRight className="w-3.5 h-3.5 text-[#93959F]" />
@@ -181,7 +200,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Provenance Notice */}
           <div className="text-[10px] text-[#93959F] leading-tight">
-            Phase 1 Foundation • Synthetic & Public Datasets • Not real Swiggy APIs
+            Prototype demonstration with simulated and public order data. Not connected to live Swiggy production systems.
           </div>
         </div>
       </aside>
