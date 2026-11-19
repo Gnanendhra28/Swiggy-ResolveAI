@@ -8,17 +8,18 @@
 
 ---
 
-## 1. Scenario Overview: Severe Kitchen Preparation Delay
+## 1. Scenario Overview: Kitchen Preparation Delay
 
-This walkthrough demonstrates an end-to-end operational recovery lifecycle for a synthetic order experiencing a severe restaurant backlog in the Koramangala, Bangalore cluster. 
+This walkthrough demonstrates an end-to-end operational recovery lifecycle for a synthetic order experiencing a kitchen backlog in the Koramangala, Bangalore cluster. 
 
-The walkthrough follows the exact execution sequence implemented in the automated script [demo_runner.py](file:///c:/Users/ASUS/Desktop/Swiggy%20ResolveAI/scripts/demo_runner.py).
+The walkthrough follows the exact execution sequence implemented in the automated verification script [demo_runner.py](file:///c:/Users/ASUS/Desktop/Swiggy%20ResolveAI/scripts/demo_runner.py).
 
 ### Scenario Characteristics
-- **Order Scenario**: `RESTAURANT_DELAY` (Scenario 2 of 12 in `AdvancedSimulationEngine`)
-- **Initial Status**: Order placed, courier allocated, but restaurant kitchen queue surges to 8 orders with an estimated preparation delay of +18.5 minutes.
-- **Threat Vector**: Cumulative delay violates SLA threshold ($+15$ minutes over nominal duration), triggering autonomous risk escalation and customer attrition risk.
+- **Order Scenario**: `RESTAURANT_DELAY` (One of 6 canonical demo scenarios in [`backend/app/simulation/scenarios.py`](file:///c:/Users/ASUS/Desktop/Swiggy%20ResolveAI/backend/app/simulation/scenarios.py))
+- **Initial Status**: Order placed, courier allocated, but kitchen queue surges with an estimated preparation delay of +18.5 minutes.
+- **Threat Vector**: Cumulative delay violates SLA threshold ($+15$ minutes over nominal duration), triggering autonomous risk escalation and customer dissatisfaction risk.
 - **Recovery Strategy**: Autonomous customer reassurance combined with a Human-in-the-Loop (HITL) approved apology voucher (₹50) under deterministic policy guardrails.
+- **Strict Simulation Boundary**: All operational actions (notifications, courier flags, wallet credits) are strictly simulated in local database state. No real SMS gateways, mobile push systems, or banking ledgers are invoked.
 
 ---
 
@@ -45,38 +46,38 @@ sequenceDiagram
     Operator->>API: 3. POST /simulation/generate (scenario: RESTAURANT_DELAY)
     API->>Sim: Seed order with dynamic timestamps
     Sim->>DB: INSERT into orders (data_source='SYNTHETIC')
-    API-->>Operator: 200 OK (order_id created, status: IN_KITCHEN)
+    API-->>Operator: 200 OK (ORDER_ID created, status: IN_KITCHEN)
 
     Operator->>API: 4. POST /simulation/events (prep delay +18.5m, queue depth 8)
     API->>DB: INSERT into order_events (data_source='SYNTHETIC')
-    API-->>Operator: 200 OK
+    API-->>Operator: 200 OK (OrderEventResponse)
 
-    Operator->>API: 5. POST /intelligence/investigate/{order_id}
+    Operator->>API: 5. POST /intelligence/investigate/$ORDER_ID
     API->>ML: Run Task A duration quantiles
     ML-->>API: P10=19.7m, P50=30.1m, P90=49.4m
     API->>MultiAgent: Dispatch Order, Restaurant, Delivery & Customer Agents
     MultiAgent->>Policy: Evaluate candidate recommendations
     Policy->>DB: Save recommendations (Auto-approve SMS; Flag Voucher for HITL)
-    API-->>Operator: 200 OK (Risk Tier: CRITICAL, 2 Recommendations)
+    API-->>Operator: 200 OK (InvestigationResponse: CRITICAL risk, 2 Recommendations)
 
     Note over Operator,API: 6. Human-in-the-Loop RBAC Gate
-    Operator->>API: POST /intelligence/recommendations/{id}/approve (as INTERN)
-    API-->>Operator: 403 Forbidden (RBAC violation)
-    Operator->>API: POST /intelligence/recommendations/{id}/approve (as OPS_LEAD)
-    API-->>Operator: 200 OK (Status: APPROVED)
+    Operator->>API: POST /intelligence/recommendations/$REC_ID/approve (as INTERN)
+    API-->>Operator: 403 Forbidden (RBAC violation: INTERN role not permitted)
+    Operator->>API: POST /intelligence/recommendations/$REC_ID/approve (as OPS_LEAD)
+    API-->>Operator: 200 OK (RecommendationResponse: APPROVED)
 
-    Operator->>API: 7. POST /intelligence/recommendations/{id}/execute
+    Operator->>API: 7. POST /intelligence/recommendations/$REC_ID/execute
     API->>Exec: Dispatch simulated recovery
     Exec->>DB: Write RecoveryExecutionAudit (is_simulated=True)
-    API-->>Operator: 200 OK (Result: EXECUTED)
+    API-->>Operator: 200 OK (status: EXECUTED)
 
     Operator->>API: 7b. Replay duplicate POST /execute
     Exec-->>API: Duplicate key detected
-    API-->>Operator: 200 OK (Result: ALREADY_EXECUTED, zero side-effects)
+    API-->>Operator: 200 OK (status: ALREADY_EXECUTED, zero side-effects)
 
-    Operator->>API: 8. GET /intelligence/audit/{order_id}
+    Operator->>API: 8. GET /intelligence/audit/$ORDER_ID
     API->>DB: SELECT from recovery_execution_audits
-    API-->>Operator: 200 OK (Immutable cryptographic audit trail)
+    API-->>Operator: 200 OK (List of ExecutionAuditResponse)
 ```
 
 ---
@@ -94,8 +95,8 @@ curl -X GET "http://127.0.0.1:8000/api/v1/health/ready" -H "Accept: application/
 {
   "status": "ready",
   "environment": "development",
-  "execution_mode": "SIMULATED",
-  "timestamp": "2026-11-19T12:54:20.100Z",
+  "execution_mode": "SIMULATION",
+  "timestamp": "2026-11-19T13:00:00.000Z",
   "checks": {
     "database": { "status": "healthy", "engine": "sqlite" },
     "ml_artifacts": { "status": "healthy", "version": "2.5.0", "task_a": true, "task_c2": true },
@@ -112,19 +113,21 @@ curl -X GET "http://127.0.0.1:8000/api/v1/health/ready" -H "Accept: application/
 Acquire a cryptographically signed HMAC-SHA256 bearer token for an `OPS_LEAD` console session:
 
 ```bash
-curl -X POST "http://127.0.0.1:8000/api/v1/auth/dev-token" \
+export OPS_LEAD_TOKEN=$(curl -s -X POST "http://127.0.0.1:8000/api/v1/auth/dev-token" \
   -H "Content-Type: application/json" \
-  -d '{"operator_profile": "ops_lead"}'
+  -d '{"operator_profile": "ops_lead"}' | jq -r .access_token)
 ```
 
-**Expected Response (`200 OK`)**:
+**Expected Response Shape (`200 OK`)**:
 ```json
 {
   "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "token_type": "bearer",
   "operator_identity": "dev_ops_lead_console",
   "operator_role": "OPS_LEAD",
-  "expires_in_minutes": 60
+  "expires_in_seconds": 7200,
+  "environment": "development",
+  "warning": "DEVELOPMENT ONLY: This token generator is strictly disabled in staging and production."
 }
 ```
 
@@ -135,30 +138,34 @@ curl -X POST "http://127.0.0.1:8000/api/v1/auth/dev-token" \
 Generate a synthetic order seeded in the `RESTAURANT_DELAY` state:
 
 ```bash
-curl -X POST "http://127.0.0.1:8000/api/v1/simulation/generate" \
+GEN_RESP=$(curl -s -X POST "http://127.0.0.1:8000/api/v1/simulation/generate" \
   -H "Content-Type: application/json" \
-  -d '{
-    "scenario": "RESTAURANT_DELAY",
-    "count": 1,
-    "seed": 42
-  }'
+  -d '{"scenario": "RESTAURANT_DELAY", "count": 1, "seed": 42}')
+
+export ORDER_ID=$(echo $GEN_RESP | jq -r '.order_ids[0]')
+echo "Generated Order ID: $ORDER_ID"
 ```
 
-**Expected Response (`200 OK`)**:
+**Actual Response Shape (`SimulationGenerateResponse`, `200 OK`)**:
 ```json
 {
   "status": "success",
   "scenario": "RESTAURANT_DELAY",
   "generated_count": 1,
-  "order_ids": ["fef1a3e5-0560-4e28-8c05-a793cadd6efc"]
+  "order_ids": [
+    "<generated-order-uuid>"
+  ],
+  "run_id": "demo_restaurant_delay_3a7f8b9c",
+  "data_source": "SYNTHETIC",
+  "created_at": "2026-11-19T13:00:01.120Z"
 }
 ```
 
 #### Order Provenance Inspection
-Querying the generated order via `GET /api/v1/orders/{order_id}` demonstrates strict data isolation:
-- `data_source`: `"SYNTHETIC"` (strictly segregated from historical public datasets).
+Querying the generated order demonstrates strict data isolation:
+- `data_source`: `"SYNTHETIC"` (segregated from historical public datasets).
 - `order_status`: `"IN_KITCHEN"`
-- `created_at`: Set dynamically relative to `now()` (e.g., $T - 25\text{ minutes}$).
+- `created_at`: Set dynamically relative to `now()` ($T - 25\text{ minutes}$).
 - `promised_delivery_at`: Set to $T + 15\text{ minutes}$ (total promised SLA: 40 minutes).
 
 ---
@@ -171,36 +178,49 @@ Inject two synthetic telemetry events into the order timeline: a kitchen backlog
 ```bash
 curl -X POST "http://127.0.0.1:8000/api/v1/simulation/events" \
   -H "Content-Type: application/json" \
-  -d '{
-    "order_id": "fef1a3e5-0560-4e28-8c05-a793cadd6efc",
-    "event_type": "RESTAURANT_PREPARATION_DELAY",
-    "event_timestamp": "2026-11-19T12:44:20Z",
-    "metadata": {
-      "prep_delay_min": 18.5,
-      "kitchen_queue_depth": 8,
-      "station": "tandoor_grill"
+  -d "{
+    \"order_id\": \"$ORDER_ID\",
+    \"event_type\": \"RESTAURANT_PREPARATION_DELAY\",
+    \"metadata\": {
+      \"prep_delay_min\": 18.5,
+      \"kitchen_queue_depth\": 8,
+      \"station\": \"tandoor_grill\"
     },
-    "data_source": "SYNTHETIC"
-  }'
+    \"data_source\": \"SYNTHETIC\"
+  }"
+```
+
+**Actual Response Shape (`OrderEventResponse`, `200 OK`)**:
+```json
+{
+  "id": "<event-uuid-1>",
+  "order_id": "<generated-order-uuid>",
+  "event_type": "RESTAURANT_PREPARATION_DELAY",
+  "event_timestamp": "2026-11-19T12:50:00.000Z",
+  "metadata": {
+    "prep_delay_min": 18.5,
+    "kitchen_queue_depth": 8,
+    "station": "tandoor_grill"
+  },
+  "data_source": "SYNTHETIC",
+  "created_at": "2026-11-19T13:00:02.000Z"
+}
 ```
 
 #### 4b. Courier Allotment Delay Event
 ```bash
 curl -X POST "http://127.0.0.1:8000/api/v1/simulation/events" \
   -H "Content-Type: application/json" \
-  -d '{
-    "order_id": "fef1a3e5-0560-4e28-8c05-a793cadd6efc",
-    "event_type": "COURIER_ASSIGNMENT_DELAY",
-    "event_timestamp": "2026-11-19T12:49:20Z",
-    "metadata": {
-      "allotment_delay_min": 11.0,
-      "rejections_count": 2
+  -d "{
+    \"order_id\": \"$ORDER_ID\",
+    \"event_type\": \"COURIER_ASSIGNMENT_DELAY\",
+    \"metadata\": {
+      \"allotment_delay_min\": 11.0,
+      \"rejections_count\": 2
     },
-    "data_source": "SYNTHETIC"
-  }'
+    \"data_source\": \"SYNTHETIC\"
+  }"
 ```
-
-Both endpoints return `{"status": "EVENT_RECORDED", "event_id": "<uuid>"}` with `HTTP 200 OK`.
 
 ---
 
@@ -209,68 +229,103 @@ Both endpoints return `{"status": "EVENT_RECORDED", "event_id": "<uuid>"}` with 
 Trigger an automated investigation across the 4 specialized agents:
 
 ```bash
-curl -X POST "http://127.0.0.1:8000/api/v1/intelligence/investigate/fef1a3e5-0560-4e28-8c05-a793cadd6efc" \
-  -H "Accept: application/json"
+INV_RESP=$(curl -s -X POST "http://127.0.0.1:8000/api/v1/intelligence/investigate/$ORDER_ID" \
+  -H "Accept: application/json")
+
+export REC_ID=$(echo $INV_RESP | jq -r '.recommendations[] | select(.action_type=="APOLOGY_CREDIT_VOUCHER") | .id')
+echo "Target Voucher Recommendation ID: $REC_ID"
 ```
 
-**Expected Response (`200 OK`)**:
+**Actual Response Shape (`InvestigationResponse`, `200 OK`)**:
 ```json
 {
-  "order_id": "fef1a3e5-0560-4e28-8c05-a793cadd6efc",
-  "workflow_status": "COMPLETED",
+  "id": "<investigation-uuid>",
+  "order_id": "<generated-order-uuid>",
+  "status": "COMPLETED",
   "risk_tier": "CRITICAL",
-  "task_a_quantiles": {
-    "eta_p10_min": 19.67,
-    "eta_p50_min": 30.07,
-    "eta_p90_min": 49.35,
-    "nominal_coverage": "80%"
+  "trigger_event": "MANUAL_OPERATOR_TRIGGER",
+  "eta_p10": 19.67,
+  "eta_p50": 30.07,
+  "eta_p90": 49.35,
+  "eta_interval_width": 29.68,
+  "is_long_tail": true,
+  "cancellation_probability": null,
+  "cancellation_alert_budget_10k": false,
+  "ml_provenance": {
+    "model_version": "2.5.0",
+    "task_a_quantile": "P10_P50_P90",
+    "task_c2_evaluated": false,
+    "task_c2_reason": "Order evaluated prior to landmark window (t_allot + 5 min)"
   },
-  "task_c2_evaluation": {
-    "eligible": false,
-    "reason": "Order evaluated prior to landmark window (t_allot + 5 min)"
+  "restaurant_evidence": {
+    "reported_prep_delay_min": 18.5,
+    "kitchen_queue_depth": 8
   },
-  "agent_diagnostics": {
-    "order_agent": {
-      "delay_detected_min": 18.5,
-      "sla_breach_probability": 0.88,
-      "risk_escalation": "CRITICAL"
-    },
-    "restaurant_agent": {
-      "kitchen_status": "BACKLOGGED",
-      "reported_prep_delay": 18.5,
-      "action_advocated": "EXPEDITE_KITCHEN_PING"
-    },
-    "delivery_agent": {
-      "transit_status": "COURIER_DISPATCHED",
-      "allotment_friction": 11.0,
-      "action_advocated": "COURIER_REROUTE_SUPPRESSED"
-    },
-    "customer_resolution_agent": {
-      "fatigue_check": "CLEAR",
-      "recommended_action": "PROACTIVE_COMMUNICATION_AND_VOUCHER"
-    }
+  "delivery_evidence": {
+    "allotment_delay_min": 11.0
+  },
+  "agent_reasoning": {
+    "order_intelligence": "Predicted P90 duration of 49.4m exceeds SLA threshold. Risk escalated to CRITICAL.",
+    "restaurant_coordination": "Kitchen backlog confirmed (+18.5m). Expedite kitchen notification recommended.",
+    "delivery_intelligence": "Courier allotment delayed (+11m). Alternate courier reassignment evaluated.",
+    "customer_resolution": "High dissatisfaction risk. Proactive notification and goodwill credit voucher recommended."
+  },
+  "workflow_execution": {
+    "nodes_visited": ["order_agent", "restaurant_agent", "delivery_agent", "customer_resolution_agent"],
+    "execution_time_ms": 28.5
   },
   "recommendations": [
     {
-      "id": "71a06734-e6ec-4581-9975-d14ef9a58402",
+      "id": "<rec-uuid-1>",
+      "investigation_id": "<investigation-uuid>",
+      "order_id": "<generated-order-uuid>",
       "action_type": "PROACTIVE_CUSTOMER_NOTIFICATION",
       "title": "Proactive Customer Delay Notification",
-      "description": "Your meal is being prepared with extra care. Our delivery partner is on the way.",
+      "rationale": "Order elapsed time approaching promised delivery window with active kitchen backlog.",
+      "sensitivity_level": "LOW",
+      "estimated_impact": "WISMO reduction (-35%)",
       "requires_approval": false,
       "approval_status": "APPROVED",
-      "execution_status": "PENDING"
+      "approved_by": "AUTONOMOUS_POLICY_ENGINE",
+      "operator_role": null,
+      "approval_notes": "Auto-approved by PolicyEngine under non-intrusive threshold.",
+      "approval_timestamp": "2026-11-19T13:00:03.500Z",
+      "expires_at": "2026-11-19T13:30:03.500Z",
+      "execution_status": "PENDING",
+      "execution_payload": {
+        "channel": "SIMULATED_PUSH_NOTIFICATION",
+        "headline": "We're closely tracking your order"
+      },
+      "created_at": "2026-11-19T13:00:03.500Z",
+      "updated_at": "2026-11-19T13:00:03.500Z"
     },
     {
-      "id": "f1eb1516-2ff2-45d6-9c4d-c43e5f2fcdcd",
+      "id": "<rec-uuid-2>",
+      "investigation_id": "<investigation-uuid>",
+      "order_id": "<generated-order-uuid>",
       "action_type": "APOLOGY_CREDIT_VOUCHER",
       "title": "Autonomous Apology Wallet Credit (₹50)",
-      "description": "Issuing ₹50 goodwill credit due to severe kitchen delay (>15m breach).",
+      "rationale": "Severe cumulative delay exceeding +18m SLA breach requires financial appeasement.",
+      "sensitivity_level": "HIGH",
+      "estimated_impact": "Customer churn mitigation (0.94 score)",
       "requires_approval": true,
       "approval_status": "AWAITING_APPROVAL",
+      "approved_by": null,
+      "operator_role": null,
+      "approval_notes": null,
+      "approval_timestamp": null,
+      "expires_at": "2026-11-19T13:30:03.500Z",
       "execution_status": "PENDING",
-      "estimated_cost_inr": 50.0
+      "execution_payload": {
+        "credit_amount_inr": 50.0,
+        "wallet_type": "SIMULATED_SWIGGY_MONEY"
+      },
+      "created_at": "2026-11-19T13:00:03.500Z",
+      "updated_at": "2026-11-19T13:00:03.500Z"
     }
-  ]
+  ],
+  "created_at": "2026-11-19T13:00:03.500Z",
+  "updated_at": "2026-11-19T13:00:03.500Z"
 }
 ```
 
@@ -282,41 +337,59 @@ The policy engine automatically approved the non-intrusive notification, but fla
 
 #### 6a. Attempt Approval with Unauthorized Role (`INTERN`)
 ```bash
-# Acquire intern token
+# Acquire intern bearer token
 INTERN_TOKEN=$(curl -s -X POST "http://127.0.0.1:8000/api/v1/auth/dev-token" \
   -H "Content-Type: application/json" \
   -d '{"operator_profile": "intern"}' | jq -r .access_token)
 
-# Attempt approval
-curl -X POST "http://127.0.0.1:8000/api/v1/intelligence/recommendations/f1eb1516-2ff2-45d6-9c4d-c43e5f2fcdcd/approve" \
+# Attempt approval as INTERN
+curl -X POST "http://127.0.0.1:8000/api/v1/intelligence/recommendations/$REC_ID/approve" \
   -H "Authorization: Bearer $INTERN_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"notes": "Intern attempting approval"}'
+  -d '{"notes": "Unauthorized intern approval attempt"}'
 ```
 
-**Expected Response (`403 Forbidden`)**:
+**Actual Response (`HTTP 403 Forbidden`)**:
 ```json
 {
-  "detail": "Insufficient privileges. Role 'INTERN' is not authorized to approve recovery recommendations. Required: OPS_LEAD, CITY_HEAD, or ADMIN."
+  "detail": "Authorization denied: Role 'INTERN' is not permitted to approve recovery operations."
 }
 ```
+*Role Enforcement Proof*: As defined in [`PolicyEngine.AUTHORIZED_ROLES`](file:///c:/Users/ASUS/Desktop/Swiggy%20ResolveAI/backend/app/services/policy_engine.py), only `OPERATOR`, `OPS_LEAD`, `ADMIN`, or `SUPERVISOR` can approve sensitive actions.
 
 #### 6b. Approve with Authorized Role (`OPS_LEAD`)
 ```bash
-curl -X POST "http://127.0.0.1:8000/api/v1/intelligence/recommendations/f1eb1516-2ff2-45d6-9c4d-c43e5f2fcdcd/approve" \
+curl -X POST "http://127.0.0.1:8000/api/v1/intelligence/recommendations/$REC_ID/approve" \
   -H "Authorization: Bearer $OPS_LEAD_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"notes": "Verified kitchen delay > 18m. Approved goodwill credit."}'
+  -d '{"notes": "Verified kitchen delay > 18m. Approved simulated goodwill credit."}'
 ```
 
-**Expected Response (`200 OK`)**:
+**Actual Response Shape (`RecommendationResponse`, `200 OK`)**:
 ```json
 {
-  "id": "f1eb1516-2ff2-45d6-9c4d-c43e5f2fcdcd",
+  "id": "<rec-uuid-2>",
+  "investigation_id": "<investigation-uuid>",
+  "order_id": "<generated-order-uuid>",
+  "action_type": "APOLOGY_CREDIT_VOUCHER",
+  "title": "Autonomous Apology Wallet Credit (₹50)",
+  "rationale": "Severe cumulative delay exceeding +18m SLA breach requires financial appeasement.",
+  "sensitivity_level": "HIGH",
+  "estimated_impact": "Customer churn mitigation (0.94 score)",
+  "requires_approval": true,
   "approval_status": "APPROVED",
-  "approval_identity": "dev_ops_lead_console",
-  "approved_at": "2026-11-19T12:54:20.550Z",
-  "execution_status": "PENDING"
+  "approved_by": "dev_ops_lead_console",
+  "operator_role": "OPS_LEAD",
+  "approval_notes": "Verified kitchen delay > 18m. Approved simulated goodwill credit.",
+  "approval_timestamp": "2026-11-19T13:00:04.100Z",
+  "expires_at": "2026-11-19T13:30:03.500Z",
+  "execution_status": "PENDING",
+  "execution_payload": {
+    "credit_amount_inr": 50.0,
+    "wallet_type": "SIMULATED_SWIGGY_MONEY"
+  },
+  "created_at": "2026-11-19T13:00:03.500Z",
+  "updated_at": "2026-11-19T13:00:04.100Z"
 }
 ```
 
@@ -326,48 +399,55 @@ curl -X POST "http://127.0.0.1:8000/api/v1/intelligence/recommendations/f1eb1516
 
 #### 7a. Execute Approved Recommendation
 ```bash
-curl -X POST "http://127.0.0.1:8000/api/v1/intelligence/recommendations/f1eb1516-2ff2-45d6-9c4d-c43e5f2fcdcd/execute" \
+curl -X POST "http://127.0.0.1:8000/api/v1/intelligence/recommendations/$REC_ID/execute" \
   -H "Authorization: Bearer $OPS_LEAD_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{}'
 ```
 
-**Expected Response (`200 OK`)**:
+**Actual Response Shape (`200 OK`)**:
 ```json
 {
-  "recommendation_id": "f1eb1516-2ff2-45d6-9c4d-c43e5f2fcdcd",
-  "action_type": "APOLOGY_CREDIT_VOUCHER",
   "status": "EXECUTED",
-  "execution_mode": "SIMULATED",
-  "idempotency_key": "f57f73659ca92df9afbab75679e3e205ab03bb4ef6e5e8e81504931a29f8f237",
-  "executed_at": "2026-11-19T12:54:20.610Z",
-  "details": {
-    "simulated_credit_inr": 50.0,
-    "ledger_status": "SIMULATED_SUCCESS",
-    "recipient_customer_id": "cust_blr_4812"
-  }
+  "audit_id": "<audit-uuid-1>",
+  "action_type": "APOLOGY_CREDIT_VOUCHER",
+  "execution_result": {
+    "action": "APOLOGY_CREDIT_VOUCHER",
+    "amount_inr": 50.0,
+    "wallet_credited": true,
+    "churn_mitigation_score": 0.94
+  },
+  "is_simulated": true,
+  "idempotency_key": "d280ee725a841427dba53fbad503fc39f7543bead893708e1a631f478a514d7a",
+  "executed_at": "2026-11-19T13:00:04.500Z"
 }
 ```
 
 #### 7b. Duplicate Replay Attack Verification
 Re-submitting the exact same execution request:
 ```bash
-curl -X POST "http://127.0.0.1:8000/api/v1/intelligence/recommendations/f1eb1516-2ff2-45d6-9c4d-c43e5f2fcdcd/execute" \
+curl -X POST "http://127.0.0.1:8000/api/v1/intelligence/recommendations/$REC_ID/execute" \
   -H "Authorization: Bearer $OPS_LEAD_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{}'
 ```
 
-**Expected Response (`200 OK` - Idempotent Skip)**:
+**Actual Response Shape (`200 OK` - Idempotent Skip)**:
 ```json
 {
-  "recommendation_id": "f1eb1516-2ff2-45d6-9c4d-c43e5f2fcdcd",
   "status": "ALREADY_EXECUTED",
-  "message": "Action previously executed. Duplicate call ignored by idempotency filter.",
-  "original_executed_at": "2026-11-19T12:54:20.610Z"
+  "message": "Recommendation was already executed (idempotent replay).",
+  "audit_id": "<audit-uuid-1>",
+  "idempotency_key": "d280ee725a841427dba53fbad503fc39f7543bead893708e1a631f478a514d7a",
+  "execution_result": {
+    "action": "APOLOGY_CREDIT_VOUCHER",
+    "amount_inr": 50.0,
+    "wallet_credited": true,
+    "churn_mitigation_score": 0.94
+  }
 }
 ```
-*Crucial Safety Guarantee*: No redundant financial credits or notification spam can occur.
+*Crucial Safety Guarantee*: No redundant financial credits or notification spam can occur on replayed calls.
 
 ---
 
@@ -376,42 +456,56 @@ curl -X POST "http://127.0.0.1:8000/api/v1/intelligence/recommendations/f1eb1516
 Retrieve the cryptographically stamped execution audit record for the order:
 
 ```bash
-curl -X GET "http://127.0.0.1:8000/api/v1/intelligence/audit/fef1a3e5-0560-4e28-8c05-a793cadd6efc" \
+curl -X GET "http://127.0.0.1:8000/api/v1/intelligence/audit/$ORDER_ID" \
   -H "Accept: application/json"
 ```
 
-**Expected Response (`200 OK`)**:
+**Actual Response Shape (`List[ExecutionAuditResponse]`, `200 OK`)**:
 ```json
 [
   {
-    "id": "1de8ff9c-8de1-46cc-9471-f187a57a79c2",
-    "order_id": "fef1a3e5-0560-4e28-8c05-a793cadd6efc",
-    "recommendation_id": "f1eb1516-2ff2-45d6-9c4d-c43e5f2fcdcd",
+    "id": "<audit-uuid-1>",
+    "recommendation_id": "<rec-uuid-2>",
+    "order_id": "<generated-order-uuid>",
     "action_type": "APOLOGY_CREDIT_VOUCHER",
-    "execution_mode": "SIMULATED",
-    "is_simulated": true,
+    "initial_order_status": "IN_KITCHEN",
+    "final_order_status": "IN_KITCHEN",
+    "idempotency_key": "d280ee725a841427dba53fbad503fc39f7543bead893708e1a631f478a514d7a",
+    "trigger_reason": "Severe cumulative delay exceeding +18m SLA breach requires financial appeasement.",
+    "ml_model_version": "2.5.0",
     "approval_identity": "dev_ops_lead_console",
-    "idempotency_key": "f57f73659ca92df9afbab75679e3e205ab03bb4ef6e5e8e81504931a29f8f237",
-    "executed_at": "2026-11-19T12:54:20.610Z",
-    "execution_metadata": {
-      "voucher_amount_inr": 50.0,
-      "policy_rule_triggered": "RULE_CRITICAL_SLA_BREACH_VOUCHER"
-    }
+    "approval_timestamp": "2026-11-19T13:00:04.100Z",
+    "execution_result": {
+      "action": "APOLOGY_CREDIT_VOUCHER",
+      "amount_inr": 50.0,
+      "wallet_credited": true,
+      "churn_mitigation_score": 0.94
+    },
+    "recovery_outcome": "SUCCESS",
+    "is_simulated": true,
+    "executed_at": "2026-11-19T13:00:04.500Z"
   },
   {
-    "id": "6602c905-3c83-4911-b187-bcbdd6653893",
-    "order_id": "fef1a3e5-0560-4e28-8c05-a793cadd6efc",
-    "recommendation_id": "71a06734-e6ec-4581-9975-d14ef9a58402",
+    "id": "<audit-uuid-2>",
+    "recommendation_id": "<rec-uuid-1>",
+    "order_id": "<generated-order-uuid>",
     "action_type": "PROACTIVE_CUSTOMER_NOTIFICATION",
-    "execution_mode": "SIMULATED",
-    "is_simulated": true,
+    "initial_order_status": "IN_KITCHEN",
+    "final_order_status": "IN_KITCHEN",
+    "idempotency_key": "203a7eb9fcc6f214333c9f807a75734a8e2cb3788ff3925c162fbd65cfb12de9",
+    "trigger_reason": "Order elapsed time approaching promised delivery window with active kitchen backlog.",
+    "ml_model_version": "2.5.0",
     "approval_identity": "AUTONOMOUS_POLICY_ENGINE",
-    "idempotency_key": "6bc6350ce35ddd5fe2bd9c4f803fcea281d22bfdf6f7da1a1f592652c7104ad5",
-    "executed_at": "2026-11-19T12:54:20.500Z",
-    "execution_metadata": {
-      "channel": "SMS_PUSH",
-      "notification_tier": "FIRST_NOTICE"
-    }
+    "approval_timestamp": "2026-11-19T13:00:03.500Z",
+    "execution_result": {
+      "action": "PROACTIVE_CUSTOMER_NOTIFICATION",
+      "channel": "SIMULATED_IN_APP_PUSH",
+      "delivery_success": true,
+      "wismo_deflection_probability": 0.88
+    },
+    "recovery_outcome": "SUCCESS",
+    "is_simulated": true,
+    "executed_at": "2026-11-19T13:00:03.550Z"
   }
 ]
 ```
@@ -422,12 +516,12 @@ curl -X GET "http://127.0.0.1:8000/api/v1/intelligence/audit/fef1a3e5-0560-4e28-
 
 It is vital for technical reviewers and platform operators to distinguish this portfolio prototype from a live commercial deployment:
 
-| Architecture Dimension | ResolveAI Prototype (Actual Implementation) | Hypothetical Live Swiggy Production Integration |
+| Architecture Dimension | ResolveAI Prototype (Actual Implementation) | Hypothetical Live Swiggy Production Integration (Future) |
 | :--- | :--- | :--- |
-| **Order Ingestion** | Local relational tables (`orders`, `order_events`) generated by `AdvancedSimulationEngine`. | Apache Kafka order lifecycle topics with schema registry validation. |
+| **Order Ingestion** | Local relational tables (`orders`, `order_events`) generated by `OrderSimulator`. | Apache Kafka order lifecycle topics with schema registry validation. |
 | **Restaurant Telemetry** | Simulated HTTP events (`RESTAURANT_PREPARATION_DELAY`) posted via `/simulation/events`. | POS / Kitchen Display System (KDS) webhooks and merchant tablet telemetry. |
 | **Courier Telemetry** | Static haversine coordinates and simulated allotment intervals. | Continuous GPS telematics, turn-by-turn velocity, and rider mobile app webhooks. |
-| **Customer Notifications** | Written to local `order_events` table and response JSON. | Live telecom gateways (Gupshup, Twilio) and Swiggy mobile app APNs / FCM push notifications. |
-| **Financial Credits** | Recorded as metadata in `RecoveryExecutionAudit` rows. | Double-entry financial ledgers, Swiggy Money wallet API, and payment gateway refunds. |
-| **Execution Safety Mode** | Hardcoded to `SIMULATED` or `SHADOW`. `LIVE` execution is strictly blocked at startup. | Production execution service connected to partner APIs with mutual TLS (mTLS). |
+| **Customer Notifications** | Written to local `order_events` table (`SIMULATED_PUSH_NOTIFICATION`). | Live telecom gateways (Gupshup, Twilio) and Swiggy mobile app APNs / FCM push notifications. |
+| **Financial Credits** | Recorded as metadata in `RecoveryExecutionAudit` rows (`SIMULATED_SWIGGY_MONEY`). | Double-entry financial ledgers, Swiggy Money wallet API, and payment gateway refunds. |
+| **Execution Safety Mode** | Hardcoded to `SIMULATION` or `SHADOW`. `LIVE` execution is strictly blocked at startup. | Production execution service connected to partner APIs with mutual TLS (mTLS). |
 | **Business Impact Claims** | Simulator-derived estimates under stated assumptions. | Measured causal impact evaluated via A/B cluster switchbacks. |

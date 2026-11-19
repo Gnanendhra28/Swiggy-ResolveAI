@@ -19,6 +19,9 @@ This document provides formal Model Cards for all machine learning models in **S
 | **Task B** | Courier Allocation Delay (>3m) | LightGBM Tuned | Order Placement ($t_0$) | **RESEARCH_ONLY (PROHIBITED)** | Test PR-AUC: 0.0729 (Recall 3.8% at 10/1k) |
 | **Task C1** | Upfront Order Cancellation Risk | LightGBM Tuned | Order Placement ($t_0$) | **RESEARCH_ONLY (PROHIBITED)** | Test PR-AUC: 0.0133 (Near Base Rate 1.11%) |
 
+> [!WARNING]
+> **Generalization Limitation**: Historical test performance is established strictly on a historical delivery benchmark from January 26 to February 6, 2021 (`cbhavik/swiggyzomato-order-information`). It does **not** establish generalization to other geographic cities, alternate delivery logistics operators, unobserved weather extremes, post-2021 fleet changes, or live commercial operating conditions.
+
 ---
 
 ## 2. Model Card: Task A — Initial Order Delivery Duration Quantiles
@@ -60,10 +63,11 @@ The model consumes 16 pre-order and static routing features available at $t_0$:
 | `demand_acceleration` | Float | Ratio of 15-minute to 60-minute volume rate |
 
 ### 2.4 Chronological Dataset Split Protocol
-All data partitions follow strict chronological boundaries to eliminate future lookahead leakage:
-- **Train Set**: `2021-01-26` to `2021-02-02` (70.2% of volume, 316,218 rows)
-- **Validation Set**: `2021-02-03` to `2021-02-04` (18.0% of volume, 81,132 rows)
-- **Test Set**: `2021-02-05` to `2021-02-06` (11.8% of volume, 54,221 rows)
+All data partitions follow strict chronological boundaries on `data/raw/orders/Rider-Info.csv` to eliminate future lookahead leakage:
+- **Train Set**: `2021-01-26` to `2021-02-02` (314,646 rows, 69.9% of volume)
+- **Validation Set**: `2021-02-03` to `2021-02-04` (81,132 rows, 18.0% of volume)
+- **Test Set**: `2021-02-05` to `2021-02-06` (54,222 rows, 12.1% of volume)
+- **Total Dataset**: 450,000 raw records (449,999 unique orders, 1 duplicate row with `order_id=181402`).
 
 ### 2.5 Quantitative Evaluation & Uncertainty Performance
 
@@ -139,7 +143,7 @@ The model combines 16 initial order features with 10 post-allotment operational 
 | | `accept_delay_at_landmark` | Minutes between courier notification and acceptance at landmark |
 
 ### 3.4 Quantitative Evaluation & Alert Budget Operating Points
-Evaluated on strict chronological test set (54,150 orders; base rate prevalence: 1.01%, 546 actual cancellations).
+Evaluated on strict chronological test set (54,150 orders evaluated post-landmark; base rate prevalence: 1.01%, 546 actual cancellations).
 
 - **Area Under PR Curve (PR-AUC)**: `0.0829` (Validation: `0.0595`)
 - **Area Under ROC Curve (ROC-AUC)**: `0.7814`
@@ -161,18 +165,6 @@ Because raw GBDT predictions under extreme class imbalance (1.01% positive class
 - **Expected Calibration Error (ECE)**: `0.0003` (reduced from `0.1181`)
 - **Maximum Calibration Error (MCE)**: `0.3750`
 - **True Test Prevalence**: `1.01%` (Calibrated mean probability: `1.01%` vs Uncalibrated mean: `12.82%`)
-
-#### Calibrated Bins Breakdown
-
-| Predicted Probability Bin | Test Sample Count | Mean Confidence | Empirical Accuracy | Calibration Error |
-| :--- | :--- | :--- | :--- | :--- |
-| `[0.0, 0.1)` | 53,998 | 0.0094 (0.94%) | 0.0093 (0.93%) | **0.0001** |
-| `[0.1, 0.2)` | 92 | 0.1644 (16.4%) | 0.1848 (18.5%) | 0.0204 |
-| `[0.2, 0.3)` | 30 | 0.2810 (28.1%) | 0.4000 (40.0%) | 0.1190 |
-| `[0.3, 0.4)` | 10 | 0.3149 (31.5%) | 0.4000 (40.0%) | 0.0851 |
-| `[0.4, 0.5)` | 6 | 0.4469 (44.7%) | 0.3333 (33.3%) | 0.1136 |
-| `[0.5, 0.6)` | 9 | 0.5000 (50.0%) | 0.5556 (55.6%) | 0.0556 |
-| `[0.6, 0.7)` | 5 | 0.6250 (62.5%) | 1.0000 (100.0%) | 0.3750 |
 
 ### 3.6 Uncertainty Limitations & False Alarm Tradeoffs
 1. **High False Positive Burden**: At the approved operational operating point (5 to 10 alerts per 1,000 orders), precision is **16.38% to 25.00%**. This means **75% to 84% of all generated alerts are false alarms** (orders that would have completed normally).
@@ -216,10 +208,16 @@ The repository preserves Phase 2.5 research models to prevent silent regression,
 
 ## 5. Dataset Provenance & Representativeness Boundaries
 
-### 5.1 Kaggle Delivery Fleet Dataset (`Rider-Info.csv`)
-- **Source**: Public Kaggle delivery fleet benchmark (~45,000 raw deliveries).
-- **Ingestion Table**: `historical_orders` (strictly segregated from operational tables).
-- **Geographic Focus**: Urban centers in India with synthetic coordinate transformations.
+### 5.1 Kaggle Delivery Fleet Dataset (`cbhavik/swiggyzomato-order-information`)
+- **Canonical Kaggle Reference**: `cbhavik/swiggyzomato-order-information`
+- **Local File**: `data/raw/orders/Rider-Info.csv` (85 MB)
+- **Verified Row Counts**:
+  - **Total Raw Rows**: `450,000`
+  - **Unique `order_id` Values**: `449,999`
+  - **Duplicate Rows**: Exactly `1` duplicate row (`order_id = 181402`, identical records at index 420455 and 420456).
+  - **Ingestion Table**: `historical_orders` (strictly segregated from operational `orders` table).
+- **Resolution of 45,593 Discrepancy**:
+  The 45,593 number appeared in early Phase 2.1 documentation due to reviewing an initial candidate benchmark dataset (`gauravmalik26/food-delivery-dataset`, which contained 45,593 rows). The project subsequently selected and placed `cbhavik/swiggyzomato-order-information` (450,000 rows) into `data/raw/orders/Rider-Info.csv`.
 - **Representativeness Gaps**:
   1. **Missing Kitchen Milestones**: 42.3% of raw historical records lack restaurant food preparation timestamps.
   2. **No Live Telematics**: Historical records contain point coordinates, not continuous GPS breadcrumbs or turn-by-turn velocity.
@@ -242,4 +240,5 @@ The repository preserves Phase 2.5 research models to prevent silent regression,
 - [x] Task C2 prohibited from being described as imminent cancellation.
 - [x] Task C2 Isotonic calibration and alert budgets (5/1k, 10/1k) verified.
 - [x] Tasks B and C1 explicitly stamped `RESEARCH_ONLY` with operational deployment prohibited.
-- [x] Dataset provenance and unobserved milestone limitations transparently disclosed.
+- [x] Explicit warning alert added: historical test performance does not establish generalization to new cities, time periods, or live operating conditions.
+- [x] Exact raw row counts (450,000), unique IDs (449,999), duplicates (1), and Kaggle dataset source reconciled.

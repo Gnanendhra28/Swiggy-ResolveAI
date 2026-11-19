@@ -12,25 +12,35 @@
 
 ```mermaid
 flowchart TD
-    subgraph DataProvenance ["1. Data Sources & Provenance"]
+    subgraph DataProvenance ["1. Data Sources & Provenance (Implemented)"]
         HF["Public Dataset (HuggingFace)\nBangalore Restaurants (CSV)\nProvenance: PUBLIC_HISTORICAL"]
-        Kaggle["Public Dataset (Kaggle)\nRider-Info.csv (45k rows)\nProvenance: PUBLIC_HISTORICAL"]
-        SimGen["AdvancedSimulationEngine\n12 Delivery Disruption Scenarios\nProvenance: SYNTHETIC"]
+        Kaggle["Public Dataset (Kaggle: cbhavik/swiggyzomato-order-information)\nRider-Info.csv (450,000 raw rows, 449,999 unique orders)\nProvenance: PUBLIC_HISTORICAL"]
+        SimDemo["OrderSimulator (SimulationService)\n6 Canonical Demo Scenarios\n(POST /api/v1/simulation/generate)\nProvenance: SYNTHETIC"]
+        SimAdv["AdvancedSimulationEngine (ExperimentService)\n12 Parameterized Stress Scenarios\n(POST /api/v1/simulation/experiments/run)\nProvenance: SYNTHETIC"]
         
-        HF -->|RestaurantDatasetLoader| DB_Rest[("restaurants\n(data_source='PUBLIC_HISTORICAL')")]
-        Kaggle -->|OrderHistoryLoader| DB_Hist[("historical_orders\n(Strictly Isolated)")]
-        SimGen -->|SimulationService| DB_Live[("orders & order_events\n(data_source='SYNTHETIC')")]
+        HF -->|RestaurantDatasetLoader| DB_Rest[("restaurants table\n(data_source='PUBLIC_HISTORICAL')")]
+        Kaggle -->|OrderHistoryLoader| DB_Hist[("historical_orders table\n(Strictly Segregated)")]
+        SimDemo -->|SimulationService| DB_Live[("orders & order_events tables\n(data_source='SYNTHETIC')")]
+        SimAdv -->|ExperimentService| DB_Live
     end
 
-    subgraph MLPlatform ["2. Phase 2.5 ML Inference Platform"]
-        DB_Live -->|Order State & Telemetry| MLSvc["MLInferenceService\n(data/artifacts/models/phase_2_5)"]
+    subgraph FutureIntegrations ["Future Production Integrations (Hypothetical / Not Implemented)"]
+        direction LR
+        KafkaLive["Kafka Lifecycle Topics\n(Future)"] -.->|Read-Only Mirror| DB_Live
+        POSLive["POS / KDS Webhooks\n(Future)"] -.->|Telemetry Mirror| DB_Live
+        GPSLive["Courier GPS Stream\n(Future)"] -.->|Telematics Mirror| DB_Live
+        PayLive["Payment Gateway / Wallet\n(Future)"] -.->|Real Settlement| ExecLayerFuture["Live Partner APIs\n(Future)"]
+    end
+
+    subgraph MLPlatform ["2. Phase 2.5 ML Inference Platform (Implemented)"]
+        DB_Live -->|Order Features & Telemetry| MLSvc["MLInferenceService\n(data/artifacts/models/phase_2_5)"]
         
         MLSvc --> TaskA["Task A: Delivery Duration Quantiles\n(LightGBM P10, P50, P90 at t_0)\nMonotonic Sorting Guarantee"]
         MLSvc --> TaskC2["Task C2: Landmark Cancellation Risk\n(Eligible at t >= t_allot + 5 min)\nIsotonic Calibrated & Budget-Gated"]
         MLSvc --> ResModels["Tasks B & C1: Research Artifacts\n(Strictly Non-Operational)"]
     end
 
-    subgraph MultiAgentEngine ["3. LangGraph Multi-Agent Orchestration"]
+    subgraph MultiAgentEngine ["3. LangGraph Multi-Agent Orchestration (Implemented)"]
         TaskA --> DebateState["AgentState (Shared Investigation State)\n• order_id & correlation_id\n• synthesized risk_tier\n• ml_predictions & agent findings\n• ranked recovery recommendations"]
         TaskC2 --> DebateState
         DB_Live --> DebateState
@@ -41,19 +51,19 @@ flowchart TD
         DebateState <--> Agent4["Customer Resolution Agent\n• Evaluates customer consent & fatigue\n• Generates communication via Gemini / Fallback"]
     end
 
-    subgraph GovernanceEngine ["4. Policy Engine & Human-In-The-Loop"]
+    subgraph GovernanceEngine ["4. Policy Engine & Human-In-The-Loop (Implemented)"]
         Agent4 --> Recs["Candidate Recommendations\n(RecoveryRecommendation)"]
         Recs --> Policy["Deterministic PolicyEngine\n• Terminal Order Protection\n• Milestone Gating (Post-Pickup Block)\n• Cooldown Timers (15m SMS / 24h Voucher)\n• Fleet Shortage Suppression (>80% Shortage)\n• 30-Minute Recommendation Expiry"]
         
         Policy --> AutoApprove["Low-Sensitivity Actions\n(Auto-Approved: Kitchen Ping, Proactive SMS)"]
         Policy --> HITL["High-Sensitivity Actions\n(Requires Operator Approval: Voucher, Reassign)"]
         
-        HITL -->|Bearer Token Role Check| OpConsole["Operator Console / API\n(OPS_LEAD / ADMIN Role Required)"]
+        HITL -->|Bearer Token Role Check| OpConsole["Operator Console / API\n(OPS_LEAD / ADMIN / SUPERVISOR / OPERATOR)"]
         OpConsole -->|Approve / Reject| ExecutionQueue["Approved Actions Queue"]
         AutoApprove --> ExecutionQueue
     end
 
-    subgraph ExecutionLayer ["5. Recovery Executor & Safety Matrix"]
+    subgraph ExecutionLayer ["5. Recovery Executor & Safety Matrix (Implemented)"]
         ExecutionQueue --> RecExec["RecoveryExecutionService.execute_recommendation()"]
         
         subgraph ModeMatrix ["Execution Mode Governance"]
@@ -65,15 +75,15 @@ flowchart TD
         end
         RecExec --> ModeMatrix
         
-        SimExec --> IdemCheck["Cryptographic Idempotency Check\n(SHA-256 Hash Key)"]
-        IdemCheck --> MutateSim["Update Simulated Order State\n(In-Memory / Database)"]
+        SimExec --> IdemCheck["Cryptographic Idempotency Check\n(Deterministic SHA-256 Hash Key)"]
+        IdemCheck --> MutateSim["Update Simulated Order State\n(OrderEvent with data_source='SYNTHETIC')"]
         MutateSim --> AuditLog["Append-Only Audit Logging\n• RecoveryExecutionAudit\n• MLPredictionAudit\n(ORM Immutability Listeners Enforced)"]
     end
 
-    subgraph PresentationEvaluation ["6. Frontend Dashboard & Counterfactual Evaluation"]
+    subgraph PresentationEvaluation ["6. Frontend Dashboard & Counterfactual Evaluation (Implemented)"]
         AuditLog --> NextUI["Next.js 16 / React 19 Frontend\n• Live Orders & Telemetry Timeline\n• Multi-Agent Investigation Inspector\n• Simulation Center & Strategy Benchmarks\n• 4-Pillar Health Diagnostic Widget"]
         
-        SimGen --> Counterfactual["CounterfactualEvaluator\n4 Matched Strategies (CRN Seeded)\nPaired Bootstrap Resampling (1,000 runs)\n20% Single Contribution Margin Accounting"]
+        SimAdv --> Counterfactual["CounterfactualEvaluator\n4 Matched Strategies (CRN Seeded)\nPaired Bootstrap Resampling (1,000 runs)\n20% Single Contribution Margin Accounting"]
         Counterfactual --> NextUI
     end
 ```
@@ -88,18 +98,27 @@ flowchart TD
    - Loader: [`RestaurantDatasetLoader`](file:///c:/Users/ASUS/Desktop/Swiggy%20ResolveAI/backend/app/services/ingestion/restaurant_loader.py).
    - Ingestion: Idempotent upsert into `restaurants` table with `data_source = "PUBLIC_HISTORICAL"`. Null listing attributes (e.g. unlisted coordinates) are preserved as `null` without synthetic fabrication.
 2. **Public Historical Lifecycle Telemetry**:
-   - Source: Kaggle Indian Food Delivery dataset (`Rider-Info.csv`, 45,593 records).
+   - Source: Kaggle Swiggy/Zomato Order Information dataset (`cbhavik/swiggyzomato-order-information`, file: `data/raw/orders/Rider-Info.csv`).
+   - Row Count Reconciliation: **450,000 raw rows** containing **449,999 unique orders** and exactly **1 duplicate order ID** (`order_id = 181402`). The 45,593 figure found in initial Phase 2.1 documentation referred to an unselected benchmark candidate (`gauravmalik26/food-delivery-dataset`) and does not reflect the local repository dataset.
    - Loader: [`OrderHistoryDatasetLoader`](file:///c:/Users/ASUS/Desktop/Swiggy%20ResolveAI/backend/app/services/ingestion/order_history_loader.py).
    - Ingestion: Strictly segregated into `historical_orders` table. Never mixed with synthetic active orders.
 3. **Synthetic Active Delivery Simulation**:
-   - Generator: [`AdvancedSimulationEngine`](file:///c:/Users/ASUS/Desktop/Swiggy%20ResolveAI/backend/app/simulation/advanced_engine.py).
-   - Generates dynamic synthetic orders and order events in `orders` and `order_events` tables with `data_source = "SYNTHETIC"`. Supports 12 realistic delivery disruption scenarios.
+   - **Interactive Demonstration Generator**: [`OrderSimulator`](file:///c:/Users/ASUS/Desktop/Swiggy%20ResolveAI/backend/app/simulation/order_simulator.py) powers `POST /api/v1/simulation/generate` with **6 canonical demo scenarios**:
+     1. `NORMAL_ORDER`: Standard seamless lifecycle.
+     2. `RESTAURANT_DELAY`: Kitchen backlog causing prep delay exceeding SLA.
+     3. `DELIVERY_DELAY`: Route congestion and transit delay.
+     4. `ASSIGNMENT_DELAY`: Fleet shortage and allotment timeout.
+     5. `FAILED_RECOVERY`: Critical equipment breakdown escalated to human support.
+     6. `SUCCESSFUL_RECOVERY`: Autonomous issue detection, fleet re-routing, and proactive appeasement.
+   - **Batch Counterfactual Experiment Engine**: [`AdvancedSimulationEngine`](file:///c:/Users/ASUS/Desktop/Swiggy%20ResolveAI/backend/app/simulation/advanced_engine.py) powers `POST /api/v1/simulation/experiments/run` with **12 parameterized operational stress scenarios**:
+     `NORMAL_DELIVERY`, `RESTAURANT_PREP_DELAY`, `RESTAURANT_CAPACITY_OVERLOAD`, `COURIER_ASSIGNMENT_DELAY`, `COURIER_ACCEPTANCE_DELAY`, `COURIER_REASSIGNMENT`, `TRAFFIC_CONGESTION`, `LONG_DISTANCE_DELIVERY`, `COMBINED_KITCHEN_DELIVERY_DELAY`, `HIGH_CANCELLATION_RISK`, `FAILED_RECOVERY`, `SUCCESSFUL_RECOVERY`.
+   - Ingestion: Generates dynamic synthetic orders and events in `orders` and `order_events` tables with `data_source = "SYNTHETIC"`.
 
 ### 2.2 Machine Learning Inference Platform (Phase 2.5)
 The platform encapsulates production models within [`MLInferenceService`](file:///c:/Users/ASUS/Desktop/Swiggy%20ResolveAI/backend/app/services/ml_inference.py):
 - **Task A (Delivery Duration Quantiles)**:
   - Predicts conditional quantiles $P10, P50, P90$ at order creation ($t_0$) using 16 pre-order and routing covariates.
-  - Enforces monotonic quantile sorting: $P10 \le P50 \le P90$.
+  - Enforces runtime monotonic quantile sorting: $\hat{y}_{P10} \le \hat{y}_{P50} \le \hat{y}_{P90}$.
   - Flags long-tail uncertainty when interval width $(P90 - P10) > 25.0\text{ min}$.
 - **Task C2 (Operational Landmark Cancellation)**:
   - Evaluated strictly at $t \ge t_{\text{allot}} + 5\text{ min}$ (5 minutes post-allotment landmark).
@@ -124,7 +143,7 @@ Implemented in [`PolicyEngine`](file:///c:/Users/ASUS/Desktop/Swiggy%20ResolveAI
 - **Cooldown Timers**: Customer notifications enforce a 15-minute cooldown; apology vouchers enforce a 24-hour customer cooldown.
 - **Fleet Shortage Feasibility**: Courier priority dispatches are suppressed if zone fleet shortage exceeds 80%.
 - **Recommendation Time-To-Live**: Unapproved recommendations expire automatically after 30 minutes.
-- **Human-in-the-Loop (HITL) Gate**: High-sensitivity actions (`APOLOGY_CREDIT_VOUCHER`, `REASSIGN_COURIER`) require explicit approval from an authenticated operator with `OPS_LEAD`, `ADMIN`, or `SUPERVISOR` role.
+- **Human-in-the-Loop (HITL) Gate**: High-sensitivity actions (`APOLOGY_CREDIT_VOUCHER`, `REASSIGN_COURIER`) require explicit approval from an authenticated operator with an authorized role (`OPERATOR`, `OPS_LEAD`, `ADMIN`, `SUPERVISOR`). Unauthorized roles (`INTERN`) are rejected with `HTTP 403 Forbidden`.
 
 ### 2.5 Recovery Execution & Append-Only Audit Logging
 Implemented in [`RecoveryExecutionService`](file:///c:/Users/ASUS/Desktop/Swiggy%20ResolveAI/backend/app/services/recovery_executor.py):
@@ -132,7 +151,7 @@ Implemented in [`RecoveryExecutionService`](file:///c:/Users/ASUS/Desktop/Swiggy
   - `SIMULATION`: Allowed only in non-production environments (`development`, `testing`, `staging`). Modifies simulated database states with `is_simulated = True`.
   - `SHADOW`: Permitted in all environments. Allows inference, debate, and scoring; strictly blocks recovery execution (`HTTP 403 Forbidden`).
   - `LIVE`: Safety governance block. Fails safely at application startup with `ValueError`.
-- **Idempotency Guarantee**: Every executed action verifies a deterministic SHA-256 idempotency key (`order_id:action_type:trigger_reason`), preventing duplicate side-effects.
+- **Idempotency Guarantee**: Every executed action verifies a deterministic SHA-256 idempotency key (`order_id:action_type:disambiguator`), preventing duplicate side-effects. Duplicate replays return `status = "ALREADY_EXECUTED"`.
 - **Audit Immutability**: `RecoveryExecutionAudit` and `MLPredictionAudit` implement SQLAlchemy ORM event listeners (`before_update`, `before_delete`) that raise `PermissionError` on any modification attempt.
 
 ### 2.6 Frontend Dashboard & Counterfactual Evaluation
