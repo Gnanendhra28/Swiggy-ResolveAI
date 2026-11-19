@@ -56,6 +56,8 @@ import {
   formatRoleLabel,
   formatDeliveryRange,
   formatDataSource,
+  formatExecutionResult,
+  formatMetadataFields,
 } from '@/lib/presentation';
 
 function OrderIntelligenceInner() {
@@ -81,6 +83,7 @@ function OrderIntelligenceInner() {
   const [showRestTechDetails, setShowRestTechDetails] = useState(false);
   const [showDelivTechDetails, setShowDelivTechDetails] = useState(false);
   const [showPredictionHistory, setShowPredictionHistory] = useState(false);
+  const [expandedAuditId, setExpandedAuditId] = useState<string | null>(null);
 
   // Load active orders
   useEffect(() => {
@@ -867,8 +870,55 @@ function OrderIntelligenceInner() {
                           {a.recovery_outcome === 'SUCCESS' ? 'Completed Successfully' : a.recovery_outcome}
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 font-mono text-[10px] text-[#686B78] max-w-xs truncate">
-                        {JSON.stringify(a.execution_result)}
+                      <td className="py-2.5 px-3 max-w-sm">
+                        {(() => {
+                          const execResult = formatExecutionResult(a.execution_result, a.action_type);
+                          const isExpanded = expandedAuditId === a.id;
+
+                          return (
+                            <div className="space-y-1">
+                              <div className="font-bold text-[#282C3F] text-xs">
+                                {execResult.headline}
+                              </div>
+                              <div className="text-[11px] text-[#686B78]">
+                                {execResult.summary}
+                              </div>
+                              {execResult.items.length > 0 && (
+                                <div className="pt-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => setExpandedAuditId(isExpanded ? null : a.id)}
+                                    className="text-[10px] font-bold text-[#FC8019] hover:underline flex items-center gap-1"
+                                  >
+                                    <span>{isExpanded ? 'Hide Attributes' : 'Inspect Attributes'}</span>
+                                    {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                                  </button>
+
+                                  {isExpanded && (
+                                    <div className="mt-2 p-2.5 rounded-xl bg-gray-50 border border-gray-200 space-y-2">
+                                      <div className="grid grid-cols-2 gap-1.5 text-[10px]">
+                                        {execResult.items.map((item) => (
+                                          <div key={item.key} className="bg-white p-1.5 rounded-lg border border-gray-200">
+                                            <span className="text-[#686B78] block font-medium opacity-80">{item.label}</span>
+                                            <span className="font-bold text-[#282C3F] break-words">{item.display}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                      <details className="pt-1 border-t border-gray-200">
+                                        <summary className="text-[9px] font-mono text-gray-400 cursor-pointer hover:text-gray-600">
+                                          Raw JSON Payload
+                                        </summary>
+                                        <pre className="mt-1 p-2 bg-gray-900 text-gray-100 rounded text-[9px] font-mono overflow-x-auto">
+                                          {JSON.stringify(a.execution_result, null, 2)}
+                                        </pre>
+                                      </details>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </td>
                     </tr>
                   );
@@ -918,7 +968,7 @@ function OrderIntelligenceInner() {
                       <th className="py-2.5 px-3">Tail Risk</th>
                       <th className="py-2.5 px-3">Task C2 Calibrated</th>
                       <th className="py-2.5 px-3">Alert Budgets (5k / 10k)</th>
-                      <th className="py-2.5 px-3">Research Scores (B / C1)</th>
+                      <th className="py-2.5 px-3">Sub-Model Risk Scores</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
@@ -967,8 +1017,15 @@ function OrderIntelligenceInner() {
                             </span>
                           </div>
                         </td>
-                        <td className="py-2.5 px-3 font-mono text-[10px] text-gray-500">
-                          B: {m.task_b_score?.toFixed(2) ?? 'N/A'} &bull; C1: {m.task_c1_score?.toFixed(2) ?? 'N/A'}
+                        <td className="py-2.5 px-3 text-[10px]">
+                          <div className="flex flex-col gap-0.5 font-medium">
+                            <span className="text-[#686B78]" title="Task B: Courier Reassignment Score">
+                              Reassign Risk: <strong className="text-[#282C3F] font-mono">{m.task_b_score?.toFixed(2) ?? 'N/A'}</strong>
+                            </span>
+                            <span className="text-[#686B78]" title="Task C1: Kitchen Bottleneck Score">
+                              Kitchen Risk: <strong className="text-[#282C3F] font-mono">{m.task_c1_score?.toFixed(2) ?? 'N/A'}</strong>
+                            </span>
+                          </div>
                         </td>
                       </tr>
                     ))}

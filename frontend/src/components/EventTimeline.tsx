@@ -18,6 +18,7 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { OrderEvent } from '@/lib/types';
+import { formatMetadataFields } from '@/lib/presentation';
 
 interface EventTimelineProps {
   events: OrderEvent[];
@@ -230,64 +231,58 @@ export const EventTimeline: React.FC<EventTimelineProps> = ({ events }) => {
 
                 {/* Event Highlights from Metadata */}
                 {hasMeta && (
-                  <div className="mt-2.5 pt-2.5 border-t border-[#ECEEEF]">
+                  <div className="mt-2.5 pt-2.5 border-t border-[#ECEEEF] space-y-2.5">
+                    {/* Structured Key-Value Cards */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-xs">
-                      {meta.delay_minutes !== undefined && (
-                        <div className="text-[#D97706] font-medium bg-[#FFF8E6] px-2 py-1 rounded border border-[#FDE68A]">
-                          Extra Delay: +{meta.delay_minutes} mins
+                      {formatMetadataFields(meta).map((field) => (
+                        <div
+                          key={field.key}
+                          className={`px-3 py-2 rounded-xl border flex flex-col justify-between ${field.badgeClass}`}
+                        >
+                          <span className="text-[10px] font-bold uppercase tracking-wider opacity-75">
+                            {field.label}
+                          </span>
+                          <span className="text-xs font-semibold mt-0.5 break-words">
+                            {field.display}
+                          </span>
                         </div>
-                      )}
-                      {meta.reason && (
-                        <div className="text-[#686B78] bg-white px-2 py-1 rounded border border-[#E9ECEE]">
-                          Observation: <span className="text-[#282C3F] font-semibold">{meta.reason}</span>
-                        </div>
-                      )}
-                      {meta.rider_name && (
-                        <div className="text-[#686B78] bg-white px-2 py-1 rounded border border-[#E9ECEE]">
-                          Delivery Partner: <span className="text-[#282C3F] font-semibold">{meta.rider_name}</span>
-                        </div>
-                      )}
-                      {meta.resolution && (
-                        <div className="text-[#60B246] font-medium bg-[#EDF7EC] px-2 py-1 rounded border border-[#C8E6C9]">
-                          Outcome: {meta.resolution}
-                        </div>
-                      )}
-                      {meta.note && (
-                        <div className="text-[#686B78] col-span-full italic bg-white px-2.5 py-1.5 rounded border border-[#E9ECEE]">
-                          &ldquo;{meta.note}&rdquo;
-                        </div>
-                      )}
-                      {meta.cuisine && (
-                        <div className="text-[#686B78] bg-white px-2 py-1 rounded border border-[#E9ECEE]">
-                          Cuisine: <span className="text-[#282C3F] font-semibold">{meta.cuisine}</span>
-                        </div>
-                      )}
-                      {meta.payment_mode && (
-                        <div className="text-[#686B78] bg-white px-2 py-1 rounded border border-[#E9ECEE]">
-                          Payment: <span className="text-[#282C3F] font-semibold">{meta.payment_mode}</span>
+                      ))}
+                    </div>
+
+                    {/* Expandable Technical Inspection */}
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => setExpandedIndex(isExpanded ? null : idx)}
+                        className="text-[11px] font-semibold text-[#FC8019] hover:text-[#E27315] flex items-center gap-1 transition-colors"
+                      >
+                        <span>{isExpanded ? 'Hide Technical Metadata' : 'Inspect Technical Metadata'}</span>
+                        {isExpanded ? (
+                          <ChevronUp className="w-3.5 h-3.5" />
+                        ) : (
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+
+                      {isExpanded && (
+                        <div className="mt-2.5 p-3 bg-white border border-[#E9ECEE] rounded-xl text-xs space-y-2">
+                          <div className="flex items-center justify-between pb-2 border-b border-[#F4F5F7] text-[11px] font-bold text-[#686B78] uppercase tracking-wider">
+                            <span>System Attribute</span>
+                            <span>Telemetry Value</span>
+                          </div>
+                          <div className="divide-y divide-[#F4F5F7] text-[11px]">
+                            {Object.entries(meta).map(([k, v]) => (
+                              <div key={k} className="py-1.5 flex items-start justify-between gap-4 font-mono">
+                                <span className="text-[#686B78]">{k}</span>
+                                <span className="text-[#282C3F] font-semibold text-right break-all">
+                                  {typeof v === 'object' ? JSON.stringify(v) : String(v)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>
-
-                    {/* Expandable Technical Metadata */}
-                    <button
-                      type="button"
-                      onClick={() => setExpandedIndex(isExpanded ? null : idx)}
-                      className="mt-2 text-[11px] font-semibold text-[#FC8019] hover:text-[#E27315] flex items-center gap-1"
-                    >
-                      <span>{isExpanded ? 'Hide Raw Details' : 'View Raw Details'}</span>
-                      {isExpanded ? (
-                        <ChevronUp className="w-3.5 h-3.5" />
-                      ) : (
-                        <ChevronDown className="w-3.5 h-3.5" />
-                      )}
-                    </button>
-
-                    {isExpanded && (
-                      <pre className="mt-2 p-3 bg-white border border-[#E9ECEE] rounded-lg text-[11px] font-mono text-[#282C3F] overflow-x-auto">
-                        {JSON.stringify(meta, null, 2)}
-                      </pre>
-                    )}
                   </div>
                 )}
               </div>

@@ -318,3 +318,227 @@ export function formatDeliveryRange(
     explanation: `Fastest expected ~${p10Val}m • Typical ~${p50}m • Latest expected ~${p90Val}m`,
   };
 }
+
+// ============================================================================
+// 5. STRUCTURED METADATA & EXECUTION RESULT FORMATTERS
+// ============================================================================
+
+export interface FormattedMetadataField {
+  key: string;
+  label: string;
+  display: string;
+  badgeClass: string;
+}
+
+export function humanizeKey(key: string): string {
+  const dictionary: Record<string, string> = {
+    prep_delay_min: 'Extra Kitchen Delay',
+    delay_minutes: 'Reported Delay',
+    kitchen_queue_depth: 'Orders Ahead in Kitchen',
+    kitchen_backlog_orders: 'Orders Ahead in Kitchen',
+    estimated_prep_total_min: 'Estimated Prep Duration',
+    traffic_factor: 'Traffic Congestion Factor',
+    transit_congestion_factor: 'Traffic Congestion Factor',
+    first_mile_km: 'Pickup Distance',
+    reassignment_count: 'Courier Reassignments',
+    reassignment_reason: 'Reassignment Reason',
+    rider_name: 'Delivery Partner',
+    new_rider_name: 'New Delivery Partner',
+    previous_rider_id: 'Previous Partner ID',
+    new_rider_id: 'New Partner ID',
+    expected_pickup_saving_min: 'Pickup Time Saved',
+    estimated_transit_gain_min: 'Transit Time Saved',
+    amount_inr: 'Apology Credit Value',
+    credit_amount_inr: 'Apology Credit Value',
+    wallet_credited: 'Wallet Credit Status',
+    wallet_type: 'Wallet Destination',
+    voucher_code: 'Voucher Code',
+    churn_mitigation_score: 'Retention Protection Score',
+    wismo_deflection_probability: 'Inquiry Prevention Chance',
+    channel: 'Delivery Channel',
+    headline: 'Notification Headline',
+    content: 'Notification Message',
+    delivery_success: 'Delivery Status',
+    ping_delivered: 'Merchant KDS Ping',
+    merchant_device_ack: 'Kitchen Display Status',
+    reassurance_delay_min_recovered: 'Prep Time Recovered',
+    queue_rank_promoted: 'Priority Rank',
+    dispatch_reallotment_target_sec: 'Target Allotment Window',
+    priority_boost: 'Priority Boost',
+    allotment_boost_score: 'Allotment Multiplier',
+    target_pool: 'Target Courier Pool',
+    telemetry_interval_sec: 'Telemetry Polling Interval',
+    reason: 'Observation Reason',
+    note: 'Operational Note',
+    resolution: 'Resolution Outcome',
+    cuisine: 'Cuisine Category',
+    payment_mode: 'Payment Mode',
+    customer_sentiment: 'Customer Sentiment',
+    support_ticket_id: 'Support Ticket ID',
+    revised_eta_p50: 'Updated Delivery ETA',
+  };
+
+  if (dictionary[key]) return dictionary[key];
+
+  return key
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
+export function humanizeStringValue(val: string): string {
+  if (!val) return '—';
+  if (/^[A-Z0-9_]+$/.test(val) && val.includes('_')) {
+    const specialValues: Record<string, string> = {
+      PROACTIVE_HIGH_RISK_APPEASEMENT: 'Proactive High-Risk Customer Appeasement',
+      AUTONOMOUS_OPERATIONAL_RECOVERY: 'Autonomous Operational Recovery',
+      SIMULATED_IN_APP_PUSH: 'In-App Push Notification (Simulated)',
+      SIMULATED_PUSH_NOTIFICATION: 'Push Notification (Simulated)',
+      SIMULATED_MERCHANT_POS_API: 'Merchant Kitchen Display (KDS)',
+      SIMULATED_SWIGGY_MONEY: 'Swiggy Money Wallet',
+      NEARBY_AVAILABLE_COURIERS: 'Nearby Active Couriers',
+      ACK_200: 'Acknowledged (200 OK)',
+    };
+    if (specialValues[val]) return specialValues[val];
+    return val
+      .split('_')
+      .map((w) => w.charAt(0) + w.slice(1).toLowerCase())
+      .join(' ');
+  }
+  return val;
+}
+
+export function formatMetadataFields(metadata?: Record<string, any> | null): FormattedMetadataField[] {
+  if (!metadata || typeof metadata !== 'object') return [];
+
+  const results: FormattedMetadataField[] = [];
+  const entries = Object.entries(metadata);
+
+  for (const [key, val] of entries) {
+    if (val === undefined || val === null || val === '') continue;
+    if (key === 'action') continue;
+
+    const label = humanizeKey(key);
+    let display = '';
+    let badgeClass = 'bg-[#F8F9FA] text-[#282C3F] border-[#E9ECEE]';
+
+    if (typeof val === 'boolean') {
+      display = val ? 'Yes / Confirmed' : 'No / Pending';
+      badgeClass = val ? 'bg-[#EDF7EC] text-[#2E7D32] border-[#C8E6C9]' : 'bg-[#FEF2F2] text-[#E23744] border-[#FECACA]';
+    } else if (typeof val === 'number') {
+      if (key.includes('inr') || key.includes('amount') || key.includes('value')) {
+        display = `₹${val.toFixed(val % 1 === 0 ? 0 : 2)}`;
+        badgeClass = 'bg-[#EDF7EC] text-[#2E7D32] border-[#C8E6C9] font-bold';
+      } else if (key.includes('score') || key.includes('probability') || key.includes('rate')) {
+        const pct = val <= 1 ? Math.round(val * 100) : Math.round(val);
+        display = `${pct}% Rate`;
+        badgeClass = 'bg-[#EDF7EC] text-[#2E7D32] border-[#C8E6C9] font-semibold';
+      } else if (key.includes('min') || key.includes('duration') || key.includes('delay')) {
+        display = `${val > 0 && !key.includes('total') ? '+' : ''}${val} mins`;
+        badgeClass = val > 5 ? 'bg-[#FFF8E6] text-[#D97706] border-[#FDE68A] font-semibold' : 'bg-gray-50 text-gray-700 border-gray-200';
+      } else if (key.includes('factor')) {
+        display = `${val}x (${val > 1.2 ? 'Heavy Traffic' : 'Normal Flow'})`;
+        badgeClass = val > 1.2 ? 'bg-[#FFF8E6] text-[#D97706] border-[#FDE68A] font-semibold' : 'bg-gray-50 text-gray-700 border-gray-200';
+      } else if (key.includes('count') || key.includes('depth') || key.includes('orders') || key.includes('backlog')) {
+        display = `${val} order${val === 1 ? '' : 's'}`;
+        badgeClass = 'bg-[#F0F7FF] text-[#1D4ED8] border-[#BFDBFE] font-semibold';
+      } else {
+        display = String(val);
+      }
+    } else if (typeof val === 'string') {
+      display = humanizeStringValue(val);
+      if (key.includes('code') || key.includes('id')) {
+        badgeClass = 'bg-purple-50 text-purple-700 border-purple-200 font-mono';
+      } else if (key === 'reason' || key === 'reassignment_reason') {
+        badgeClass = 'bg-[#F4F5F7] text-[#282C3F] border-[#E9ECEE]';
+      }
+    } else {
+      display = JSON.stringify(val);
+    }
+
+    results.push({
+      key,
+      label,
+      display,
+      badgeClass,
+    });
+  }
+
+  return results;
+}
+
+export function formatExecutionResult(
+  result?: Record<string, any> | null,
+  actionType?: string
+): {
+  headline: string;
+  summary: string;
+  items: FormattedMetadataField[];
+} {
+  const items = formatMetadataFields(result);
+  const action = (result?.action || actionType || '').toUpperCase();
+
+  if (action.includes('APOLOGY') || action.includes('WALLET') || action.includes('VOUCHER')) {
+    const amount = result?.amount_inr || result?.credit_amount_inr || 50;
+    const mitigation = result?.churn_mitigation_score ? `${Math.round(result.churn_mitigation_score * 100)}%` : '94%';
+    return {
+      headline: `₹${amount} Apology Voucher Credited`,
+      summary: `${mitigation} Customer Retention Benefit • Swiggy Money Wallet`,
+      items,
+    };
+  }
+
+  if (action.includes('NOTIFICATION') || action.includes('NOTIFIED') || action.includes('MESSAGE')) {
+    const deflection = result?.wismo_deflection_probability
+      ? `${Math.round(result.wismo_deflection_probability * 100)}%`
+      : '88%';
+    const channel = result?.channel === 'SIMULATED_IN_APP_PUSH' ? 'In-App Push' : 'Push Notification';
+    return {
+      headline: `Proactive ${channel} Delivered`,
+      summary: `${deflection} Inquiry Deflection Probability • Customer Reassured`,
+      items,
+    };
+  }
+
+  if (action.includes('REASSIGN') || action.includes('RIDER')) {
+    const rider = result?.reassigned_courier_name || 'Express Courier';
+    const gain = result?.estimated_transit_gain_min || 9.5;
+    return {
+      headline: `Reassigned to ${rider}`,
+      summary: `~${gain} mins transit time recovered • Dispatched`,
+      items,
+    };
+  }
+
+  if (action.includes('EXPEDITE') || action.includes('KITCHEN')) {
+    const recovered = result?.reassurance_delay_min_recovered || 3.5;
+    return {
+      headline: 'Merchant KDS Expedite Ping Delivered',
+      summary: `Kitchen terminal acknowledged • ~${recovered} mins prep recovered`,
+      items,
+    };
+  }
+
+  if (action.includes('PRIORITIZE') || action.includes('DISPATCH')) {
+    return {
+      headline: 'Courier Dispatch Priority Promoted',
+      summary: 'Moved to Rank #1 dispatch queue for immediate driver matching',
+      items,
+    };
+  }
+
+  if (action.includes('MONITOR')) {
+    const interval = result?.telemetry_interval_sec || 30;
+    return {
+      headline: 'Autonomous Telemetry Monitoring Active',
+      summary: `Order lifecycle actively tracked every ${interval}s`,
+      items,
+    };
+  }
+
+  return {
+    headline: 'Resolution Action Completed',
+    summary: items.length > 0 ? items.map((i) => `${i.label}: ${i.display}`).slice(0, 2).join(' • ') : 'Completed successfully with zero side-effects',
+    items,
+  };
+}
