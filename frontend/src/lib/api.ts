@@ -25,6 +25,14 @@ export function getApiBaseUrl(): string {
     return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
   }
   if (typeof window !== 'undefined') {
+    // If running in local development on port 3000 without explicit NEXT_PUBLIC_API_URL,
+    // point directly to the backend on port 8000
+    if (
+      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') &&
+      window.location.port === '3000'
+    ) {
+      return 'http://localhost:8000/api/v1';
+    }
     return `${window.location.origin}/api/v1`;
   }
   if (process.env.BACKEND_URL) {
@@ -37,15 +45,20 @@ const API_BASE_URL = getApiBaseUrl();
 
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
-    let errorDetail = 'API request failed';
+    let errorDetail = `HTTP ${res.status}`;
     try {
-      const errorJson = await res.json();
-      errorDetail =
-        errorJson.error?.message ||
-        errorJson.detail ||
-        JSON.stringify(errorJson);
+      const text = await res.text();
+      try {
+        const errorJson = JSON.parse(text);
+        errorDetail =
+          errorJson.error?.message ||
+          errorJson.detail ||
+          text;
+      } catch {
+        errorDetail = text || `HTTP ${res.status}`;
+      }
     } catch {
-      errorDetail = await res.text();
+      errorDetail = `HTTP ${res.status} (${res.statusText})`;
     }
     throw new Error(`[${res.status}] ${errorDetail}`);
   }
