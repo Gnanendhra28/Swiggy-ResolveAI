@@ -31,6 +31,7 @@ from backend.app.core.auth import (
 from backend.app.database.session import SessionLocal, engine
 from backend.app.database.base import Base
 from backend.app.models.audit import RecoveryExecutionAudit
+from backend.app.models.ml_audit import MLPredictionAudit
 from backend.app.models.order import Order
 from backend.app.models.investigation import OrderInvestigation
 from backend.app.models.recommendation import RecoveryRecommendation
@@ -129,6 +130,58 @@ class TestAuthenticationAndTokens:
             res = client.post("/api/v1/auth/dev-token", json={"operator_profile": "ops_lead"})
             assert res.status_code == 403
             assert "strictly disabled" in res.json()["detail"].lower()
+
+    def test_wrong_issuer_rejected(self):
+        token = create_access_token(
+            identity="OP-001",
+            role="OPS_LEAD",
+            issuer="fraudulent-issuer",
+        )
+        with pytest.raises(HTTPException) as excinfo:
+            verify_access_token(token)
+        assert excinfo.value.status_code == 401
+        assert "token issuer mismatch" in excinfo.value.detail
+
+    def test_wrong_audience_rejected(self):
+        token = create_access_token(
+            identity="OP-001",
+            role="OPS_LEAD",
+            audience="wrong-audience",
+        )
+        with pytest.raises(HTTPException) as excinfo:
+            verify_access_token(token)
+        assert excinfo.value.status_code == 401
+        assert "token audience mismatch" in excinfo.value.detail
+
+    def test_malformed_token_format_rejected(self):
+        with pytest.raises(HTTPException) as excinfo:
+            verify_access_token("part1.part2")
+        assert excinfo.value.status_code == 401
+        assert "must contain 3 segments" in excinfo.value.detail
+
+    def test_empty_token_rejected(self):
+        with pytest.raises(HTTPException) as excinfo:
+            verify_access_token("")
+        assert excinfo.value.status_code == 401
+        assert "empty or malformed token" in excinfo.value.detail
+
+    def test_production_secret_validation_rejects_default_dev_key(self):
+        with pytest.raises(ValueError) as excinfo:
+            Settings(
+                ENVIRONMENT="production",
+                AUTH_SECRET_KEY="resolveai-insecure-dev-secret-key-change-in-production-12345678",
+                EXECUTION_MODE="SHADOW",
+            )
+        assert "requires a strong, non-default AUTH_SECRET_KEY" in str(excinfo.value)
+
+    def test_staging_secret_validation_rejects_short_key(self):
+        with pytest.raises(ValueError) as excinfo:
+            Settings(
+                ENVIRONMENT="staging",
+                AUTH_SECRET_KEY="short-secret-key-123",
+                EXECUTION_MODE="SHADOW",
+            )
+        assert "minimum 32 characters" in str(excinfo.value)
 
 
 # =============================================================================
@@ -252,6 +305,15 @@ class TestRBACAndIdentityBoundary:
         # Server must enforce the verified token's INTERN role, resulting in 403 Forbidden!
         assert res.status_code == 403
 
+    def test_unauthorized_role_ingestion_rejected_with_403(self, client: TestClient):
+        intern_token = create_access_token(identity="OP-REAL-INTERN", role="INTERN")
+        res = client.post(
+            "/api/v1/ingest/restaurants",
+            headers={"Authorization": f"Bearer {intern_token}"},
+        )
+        assert res.status_code == 403
+        assert "lacks administrative ingestion privileges" in res.json()["detail"]
+
 
 # =============================================================================
 # 3. Execution Safety Modes (SIMULATION vs SHADOW vs LIVE)
@@ -314,6 +376,36 @@ class TestExecutionSafetyModes:
                 )
             assert "SHADOW mode" in str(excinfo.value)
 
+    def test_simulation_mode_blocked_in_production_environment(self):
+        with pytest.raises(ValueError) as excinfo:
+            Settings(
+                ENVIRONMENT="production",
+                EXECUTION_MODE="SIMULATION",
+                AUTH_SECRET_KEY="a" * 32,
+            )
+        assert "SIMULATION execution mode is strictly prohibited in production" in str(excinfo.value)
+
+    def test_recovery_execution_blocked_in_production_environment_direct_service(self, db_session: Session):
+        fake_rec_id = str(uuid.uuid4())
+        with patch.object(settings, "ENVIRONMENT", "production"):
+            with pytest.raises(PermissionError) as excinfo:
+                RecoveryExecutionService.execute_recommendation(
+                    db=db_session,
+                    recommendation_id=fake_rec_id,
+                )
+            assert "strictly prohibited in production environment" in str(excinfo.value)
+
+    def test_shadow_mode_blocks_recovery_execution_http_endpoint(self, client: TestClient):
+        fake_rec_id = str(uuid.uuid4())
+        token = create_access_token(identity="OP-LEAD-01", role="OPS_LEAD")
+        with patch.object(settings, "EXECUTION_MODE", "SHADOW"):
+            res = client.post(
+                f"/api/v1/intelligence/recommendations/{fake_rec_id}/execute",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            assert res.status_code == 403
+            assert "SHADOW mode" in res.json()["detail"]
+
 
 # =============================================================================
 # 4. RecoveryExecutionAudit Immutability Listeners
@@ -372,6 +464,74 @@ class TestAuditImmutability:
         with pytest.raises(PermissionError) as excinfo:
             db_session.commit()
         assert "immutable" in str(excinfo.value).lower()
+        db_session.rollback()
+
+    def test_ml_prediction_audit_record_cannot_be_updated(self, db_session: Session):
+        order_id = f"ORD-MLAUDIT-{uuid.uuid4().hex[:6]}"
+        order = Order(
+            id=order_id,
+            external_order_id=order_id,
+            customer_id="CUST-001",
+            restaurant_id="REST-001",
+            order_status="IN_KITCHEN",
+            order_value=300.0,
+            promised_delivery_at=datetime.now(timezone.utc) + timedelta(minutes=30),
+            created_at=datetime.now(timezone.utc),
+        )
+        db_session.add(order)
+        db_session.commit()
+
+        ml_audit = MLPredictionAudit(
+            id=str(uuid.uuid4()),
+            order_id=order.id,
+            model_version="2.5.0",
+            feature_schema_version="1.0.0",
+            task_a_eta_p50=28.5,
+            task_a_interval_min=24.0,
+            task_a_interval_max=36.0,
+            provenance_metadata={"source": "test"},
+        )
+        db_session.add(ml_audit)
+        db_session.commit()
+
+        # Attempt to mutate record
+        ml_audit.task_a_eta_p50 = 99.9
+        with pytest.raises(PermissionError) as excinfo:
+            db_session.commit()
+        assert "strictly immutable" in str(excinfo.value).lower()
+        db_session.rollback()
+
+    def test_ml_prediction_audit_record_cannot_be_deleted(self, db_session: Session):
+        order_id = f"ORD-MLAUDIT-{uuid.uuid4().hex[:6]}"
+        order = Order(
+            id=order_id,
+            external_order_id=order_id,
+            customer_id="CUST-001",
+            restaurant_id="REST-001",
+            order_status="IN_KITCHEN",
+            order_value=300.0,
+            promised_delivery_at=datetime.now(timezone.utc) + timedelta(minutes=30),
+            created_at=datetime.now(timezone.utc),
+        )
+        db_session.add(order)
+        db_session.commit()
+
+        ml_audit = MLPredictionAudit(
+            id=str(uuid.uuid4()),
+            order_id=order.id,
+            model_version="2.5.0",
+            feature_schema_version="1.0.0",
+            task_a_eta_p50=28.5,
+            provenance_metadata={"source": "test"},
+        )
+        db_session.add(ml_audit)
+        db_session.commit()
+
+        # Attempt to delete record
+        db_session.delete(ml_audit)
+        with pytest.raises(PermissionError) as excinfo:
+            db_session.commit()
+        assert "strictly immutable" in str(excinfo.value).lower()
         db_session.rollback()
 
 

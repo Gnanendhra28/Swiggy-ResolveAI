@@ -34,17 +34,17 @@ class RecoveryExecutionService:
         """
         now = datetime.now(timezone.utc)
 
-        rec = db.query(RecoveryRecommendation).filter(RecoveryRecommendation.id == recommendation_id).first()
-        if not rec:
-            raise ValueError(f"Recommendation not found: {recommendation_id}")
-
-        order = db.query(Order).filter(Order.id == rec.order_id).first()
-        if not order:
-            raise ValueError(f"Order not found: {rec.order_id}")
-
-        # Guardrail 0: Execution Mode Enforcement (SIMULATION, SHADOW, LIVE)
+        # Guardrail 0: Execution Mode & Environment Enforcement (SIMULATION, SHADOW, LIVE)
         from backend.app.core.config import settings
         exec_mode = getattr(settings, "EXECUTION_MODE", "SIMULATION").upper().strip()
+        env = getattr(settings, "ENVIRONMENT", "development").lower().strip()
+
+        if env == "production":
+            raise PermissionError(
+                "Recovery execution is strictly prohibited in production environment. "
+                "No live operational recovery or automated side effects are permitted."
+            )
+
         if exec_mode == "SHADOW":
             raise PermissionError(
                 "Recovery execution rejected: system is running in read-only SHADOW mode. "
@@ -56,6 +56,14 @@ class RecoveryExecutionService:
             )
         elif exec_mode != "SIMULATION":
             raise ValueError(f"Unknown or unsupported execution mode: '{exec_mode}'")
+
+        rec = db.query(RecoveryRecommendation).filter(RecoveryRecommendation.id == recommendation_id).first()
+        if not rec:
+            raise ValueError(f"Recommendation not found: {recommendation_id}")
+
+        order = db.query(Order).filter(Order.id == rec.order_id).first()
+        if not order:
+            raise ValueError(f"Order not found: {rec.order_id}")
 
         # Guardrail 1: Rejected recommendations can NEVER execute
         if rec.approval_status == ApprovalStatus.REJECTED.value:

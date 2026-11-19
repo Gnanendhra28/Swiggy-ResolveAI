@@ -1,8 +1,8 @@
 # Swiggy ResolveAI — Security, Authentication & Execution Safety Review
 
-- **Date**: November 18, 2026
+- **Date**: November 19, 2026
 - **Auditors**: Application Security Engineer, Principal AI Platform Architect
-- **Status**: **REMEDIATED & CRYPTOGRAPHICALLY ENFORCED**
+- **Status**: **REMEDIATED, AUDITED & CRYPTOGRAPHICALLY ENFORCED**
 
 ---
 
@@ -49,24 +49,36 @@ sequenceDiagram
   - `exp`: Expiration timestamp (seconds since epoch; default 120 minutes TTL).
   - `iss`: Issuer (`swiggy-resolveai`).
   - `aud`: Audience (`resolveai-ops`).
-- **Secret Handling**: Loaded via `settings.AUTH_SECRET_KEY` from environment. In `production`, startup validation enforces secret key rotation.
+- **Secret Handling & Validation**:
+  - Loaded via `settings.AUTH_SECRET_KEY`.
+  - In `development` and `testing`, the default insecure key is permitted.
+  - In `staging` and `production`, Pydantic startup validation rejects the default development key (`"resolveai-insecure-dev-secret-key-change-in-production-12345678"`) and enforces a minimum key length of 32 characters.
 
 ---
 
-## 2. Server-Side Identity Resolution & Gating
+## 2. Server-Side Identity Resolution & Role-Based Access Control (RBAC)
 
 - Operator identity and role are resolved **strictly from verified token claims**.
 - Any body-provided `operator_role` is ignored and cannot elevate privileges.
-- If a client passes an untrusted role string without a signed token:
+- If a client calls an endpoint without a valid signed token:
   - In `staging` or `production`: Request is rejected with `HTTP 401 Unauthorized`.
-  - In `development`: Request is assigned unprivileged fallback `role="OPERATOR"`, which is strictly rejected by `require_roles(["OPS_LEAD", "ADMIN"])` with `HTTP 403 Forbidden`.
-  - Impersonating `OPS_LEAD` or `ADMIN` without a valid signed token is impossible.
+  - In `development` or `testing`: Request is assigned an unprivileged fallback identity `sub="dev_unauthenticated_operator"`, `role="OPERATOR"`, which is strictly rejected by elevated checks (`OPS_LEAD`, `ADMIN`).
+
+### 2.1 Authorized Role Matrix
+
+| Action / Endpoint | Permitted Roles | Behavior on Unauthorized Role |
+|---|---|---|
+| **Approve Recommendation** (`POST /approve`) | `OPS_LEAD`, `ADMIN`, `SUPERVISOR` | `HTTP 403 Forbidden` (`"Role lacks required privileges"`) |
+| **Reject Recommendation** (`POST /reject`) | `OPS_LEAD`, `ADMIN`, `SUPERVISOR`, `OPERATOR` | `HTTP 403 Forbidden` |
+| **Execute Simulated Action** (`POST /execute`) | `OPS_LEAD`, `ADMIN`, `SUPERVISOR`, `OPERATOR`, `SYSTEM_AUTONOMOUS` | `HTTP 403 Forbidden` |
+| **Administrative Dataset Ingestion** (`POST /ingest/*`) | `ADMIN`, `OPS_LEAD` | `HTTP 403 Forbidden` (`"Role lacks administrative ingestion privileges"`) |
+| **View Investigations & Metrics** (`GET /*`) | `OPERATOR` and above | Public in dev; `HTTP 401 Unauthorized` in staging/prod |
 
 ---
 
 ## 3. Development Token Generator Safety Gating
 
-To facilitate local development without creating security backdoors:
+To facilitate local demonstration without creating production security backdoors:
 - Endpoint: `POST /api/v1/auth/dev-token`
 - **Environment Restriction**:
   ```python
@@ -81,25 +93,57 @@ To facilitate local development without creating security backdoors:
   - `"ops_lead"` $\to$ `sub: "dev_ops_lead_console"`, `role: "OPS_LEAD"`
   - `"admin"` $\to$ `sub: "dev_admin_console"`, `role: "ADMIN"`
   - `"operator"` $\to$ `sub: "dev_field_operator"`, `role: "OPERATOR"`
+  - `"supervisor"` $\to$ `sub: "dev_ops_supervisor"`, `role: "SUPERVISOR"`
   - `"intern"` $\to$ `sub: "dev_unauthorized_intern"`, `role: "INTERN"`
 
 ---
 
-## 4. Backend Execution Mode Boundaries
+## 4. Backend Execution Mode Boundaries & Startup Governance
 
-Configured via `settings.EXECUTION_MODE` (`SIMULATION`, `SHADOW`, `LIVE`):
+The backend enforces `settings.EXECUTION_MODE` (`SIMULATION`, `SHADOW`, `LIVE`) across all environments:
 
 ```mermaid
 flowchart TD
-    ExecReq["Execution Request: POST /recommendations/{id}/execute"] --> CheckMode{"Check settings.EXECUTION_MODE"}
+    Startup["Application Startup"] --> CheckEnv{"Check ENVIRONMENT & EXECUTION_MODE"}
+    CheckEnv -- "LIVE in Any Env" --> FatalStartup1["Startup Fatal Exception (ValueError)\n'LIVE execution mode is strictly disabled by safety governance.'"]
+    CheckEnv -- "SIMULATION in Production" --> FatalStartup2["Startup Fatal Exception (ValueError)\n'SIMULATION execution mode is strictly prohibited in production.'"]
+    CheckEnv -- "Valid Configuration" --> Ready["Server Ready"]
     
-    CheckMode -- "SHADOW" --> ShadowReject["HTTP 403 Forbidden\n'System is running in read-only SHADOW mode. Mutations disabled.'"]
-    CheckMode -- "LIVE" --> LiveReject["RuntimeError / 500\n'LIVE execution mode is disabled by safety governance.'"]
-    CheckMode -- "SIMULATION" --> SimExec["Execute simulated recovery action\nRecord RecoveryExecutionAudit (is_simulated=True)"]
+    Ready --> ExecReq["Execution Request: POST /recommendations/{id}/execute"]
+    ExecReq --> CheckRuntime{"Check Mode at Runtime"}
+    CheckRuntime -- "SHADOW" --> ShadowReject["HTTP 403 Forbidden\n'System is running in read-only SHADOW mode. Actions disabled.'"]
+    CheckRuntime -- "Production Env" --> ProdReject["HTTP 403 Forbidden\n'Recovery execution is strictly prohibited in production environment.'"]
+    CheckRuntime -- "SIMULATION" --> SimExec["Execute simulated recovery action\nRecord RecoveryExecutionAudit (is_simulated=True)"]
 ```
 
-| Mode | Allowed Actions | Side-Effect Gating |
-|---|---|---|
-| **`SIMULATION`** | Ingest orders, trigger investigations, execute simulated actions | Actions executed in memory/DB with `is_simulated = True`. Zero real SMS/calls/funds. |
-| **`SHADOW`** | Passive ingestion, telemetry monitoring, multi-agent debate, risk scoring | **Execution is strictly blocked** (`HTTP 403`). Audit logs capture counterfactual decisions only. |
-| **`LIVE`** | Customer dispatch, partner POS calls, wallet credits | **Permanently disabled** by governance policy. Attempted execution raises a runtime safety error. |
+| Mode | Allowed Environments | Permitted Actions | Recovery Execution Behavior | Side-Effect Gating |
+|---|---|---|---|---|
+| **`SIMULATION`** | `development`, `testing`, `staging` | Ingest orders, trigger investigations, execute simulated actions | Simulated actions execute in memory/DB with `is_simulated = True` | Strictly simulated. Zero real SMS, calls, or wallet transfers. |
+| **`SHADOW`** | `development`, `testing`, `staging`, `production` | Passive telemetry ingestion, risk scoring, multi-agent debate | **Execution is strictly blocked** (`HTTP 403 Forbidden` / `PermissionError`) | Passive observation only. Execution cannot be forced. |
+| **`LIVE`** | None (Governance Block) | None | **Fails Safely at Startup** (`ValueError`) | Customer dispatch and external system mutations are disabled. |
+
+---
+
+## 5. Audit Immutability & Database Administrator Boundary
+
+### 5.1 ORM Immutability Protection
+Both `RecoveryExecutionAudit` and `MLPredictionAudit` implement SQLAlchemy event listeners:
+- `@event.listens_for(RecoveryExecutionAudit, "before_update")`
+- `@event.listens_for(RecoveryExecutionAudit, "before_delete")`
+- `@event.listens_for(MLPredictionAudit, "before_update")`
+- `@event.listens_for(MLPredictionAudit, "before_delete")`
+
+Any attempt by application services or API endpoints to update or delete an existing audit entry raises a `PermissionError`.
+
+### 5.2 Residual Direct SQL Risk & Production Boundary
+> [!IMPORTANT]
+> **ORM-Level Immutability Boundary**:
+> The event hooks intercept all `session.flush()` and `session.commit()` operations triggered by the application service layer. Application code, API endpoints, and Celery/background workers cannot mutate or delete historical audits.
+>
+> **Residual Database Administrator Risk**:
+> ORM event listeners execute in Python runtime space. They do NOT protect against direct SQL queries (`UPDATE recovery_execution_audits ...` or `DELETE FROM ml_prediction_audits ...`) executed directly by a privileged database administrator (DBA) or raw SQL connection. Cryptographic hash-chaining (Merkle tree) is not implemented in the current release. Production deployments must enforce database-level privilege separation:
+> ```sql
+> -- Recommended PostgreSQL Role Grants for Application User
+> GRANT SELECT, INSERT ON recovery_execution_audits, ml_prediction_audits TO resolveai_app;
+> REVOKE UPDATE, DELETE, TRUNCATE ON recovery_execution_audits, ml_prediction_audits FROM resolveai_app;
+> ```

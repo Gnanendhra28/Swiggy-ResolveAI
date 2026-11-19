@@ -1,6 +1,6 @@
 # Swiggy ResolveAI — Known Limitations & Operational Boundaries
 
-This document details the known technical boundaries, model assumptions, operational constraints, and edge-case behaviors of the **Swiggy ResolveAI** platform as of Phase 7.
+This document details the known technical boundaries, model assumptions, operational constraints, and edge-case behaviors of the **Swiggy ResolveAI** platform as of the Final Release Gate.
 
 ---
 
@@ -12,14 +12,14 @@ This document details the known technical boundaries, model assumptions, operati
 > The system does not interface with Swiggy production APIs, live courier telematics fleets, merchant Point-of-Sale (POS) terminals, or real payment gateways. No actual money is transferred, no couriers are re-routed in real traffic, and no customers receive unsimulated push messages.
 
 - **Telematics Resolution**: Fleet locations and kitchen queue depths are generated through high-fidelity synthetic telemetry rather than live hardware GPS polling or KDS integration.
-- **Counterfactual Response Assumption**: In the Phase 5 simulation engine, merchant response to a kitchen ping recovers 4–6 minutes of preparation time. In real-world kitchens under peak dinner rushes, physical stove and fryer constraints may limit actual recovery.
+- **Counterfactual Response Assumption**: In the simulation engine, merchant response to a kitchen ping recovers 4–6 minutes of preparation time. In real-world kitchens under peak dinner rushes, physical stove and fryer constraints may limit actual recovery.
 
 ---
 
 ## 2. Machine Learning Model Constraints
 
 ### 2.1 Task A (Delivery Duration Uncertainty Regressors)
-- **Quantile Scope**: Predicts conditional quantiles $P10, P50, P90$ at order creation.
+- **Quantile Scope**: Predicts conditional quantiles $P10, P50, P90$ at order creation ($t_0$) using 16 pre-order and static routing features.
 - **Quantile Crossing Prevention**: Monotonic post-processing strictly enforces $P10 \le P50 \le P90$.
 - **Boundary Validity**: Training data distributions reflect standard metro delivery conditions (20–45 min duration). In extreme weather disruptions (e.g. monsoons, waterlogging), predictions reflect statistical uncertainty intervals rather than physical guarantees.
 - **Missing Covariates**: The publicly available delivery dataset lacks granular meteorological (rainfall mm/hr) and micro-elevation features.
@@ -40,32 +40,30 @@ This document details the known technical boundaries, model assumptions, operati
 
 ---
 
-## 3. Policy & Governance Limitations
+## 3. Security & Execution Safety Boundaries
 
-### 3.1 Moral Hazard of Autonomous Apology Vouchers
-- **Abuse Vectors**: If customers discover that reporting or experiencing deliberate delays yields automated ₹50 credits, opportunistic behavior could occur.
-- **Mitigation Implemented**: Apology vouchers require explicit human-in-the-loop (HITL) operator approval, strict per-customer lifetime cooldowns, and can never be auto-approved by AI agents alone.
+### 3.1 Execution Mode Boundaries
+- **`SIMULATION` in Production**: Blocked at application startup via Pydantic model validation.
+- **`SHADOW` Mode**: Allows passive telemetry ingestion and counterfactual scoring, but strictly blocks recovery execution at both HTTP and service layers (`HTTP 403 Forbidden`).
+- **`LIVE` Mode**: Fails safely at startup with `ValueError` across all environments by safety governance policy.
 
-### 3.2 Recommendation Expiration Window
-- **30-Minute Time-To-Live (TTL)**: Recommendations expire automatically 30 minutes after generation. An operator attempting to approve an expired recommendation will receive an HTTP 400 rejection to prevent executing actions on stale operational state.
-
-### 3.3 Fleet Shortage Feasibility Gating
-- **Courier Prioritization Suppression**: If zone fleet shortage exceeds 80%, courier priority actions are automatically suppressed by `PolicyEngine.check_fleet_availability_threshold` because priority dispatch without available couriers causes fleet churn without ETA improvement.
+### 3.2 Audit Immutability vs. Direct SQL Risk
+- **ORM Protection Boundary**: `RecoveryExecutionAudit` and `MLPredictionAudit` implement SQLAlchemy `before_update` and `before_delete` listeners that raise `PermissionError` on any application-level mutation attempt.
+- **Residual Direct SQL Risk**: ORM event listeners execute in Python runtime space. They do NOT prevent a database administrator (DBA) from executing raw SQL statements (`UPDATE ...` or `DELETE FROM ...`). Cryptographic Merkle-tree hashing is not implemented. Production deployments require PostgreSQL role privilege separation (`REVOKE UPDATE, DELETE ON ...`).
 
 ---
 
-## 4. Systems Architecture & Infrastructure Boundaries
+## 4. Policy & Governance Limitations
 
-### 4.1 Single-Node Monolith Capacity
-- **Target Scale**: Designed for up to 5,000 concurrent active orders per application worker on standard cloud compute instances (4 vCPU, 8 GB RAM).
-- **SQLite vs PostgreSQL**: Local development and automated test suites utilize SQLite with Write-Ahead Logging (`WAL` mode). Multi-worker production deployments require PostgreSQL 16+ with row-level locking for concurrent idempotency key guarantees.
+### 4.1 Moral Hazard of Autonomous Apology Vouchers
+- **Abuse Vectors**: If customers discover that reporting or experiencing deliberate delays yields automated ₹50 credits, opportunistic behavior could occur.
+- **Mitigation Implemented**: Apology vouchers require explicit human-in-the-loop (HITL) operator approval, strict per-customer lifetime cooldowns, and can never be auto-approved by AI agents alone.
 
-### 4.2 LLM Synthesis & Fallback Latency
-- **Timeout Boundary**: CustomerResolutionAgent enforces a 10.0-second timeout on Google Gemini API calls.
-- **Deterministic Fallback**: If Gemini times out, experiences rate limits, or if `GEMINI_API_KEY` is not provided, the platform automatically falls back to deterministic rule-grounded synthesis. While 100% reliable and functionally identical, deterministic messages lack the linguistic nuance of generative LLMs.
+### 4.2 Recommendation Expiration Window
+- **30-Minute Time-To-Live (TTL)**: Recommendations expire automatically 30 minutes after generation. An operator attempting to approve an expired recommendation will receive an HTTP 400 rejection to prevent executing actions on stale operational state.
 
-### 4.3 Database Cleanup & Retention
-- **Audit Table Growth**: In continuous simulation runs, the `recovery_execution_audits` and `order_events` tables accumulate rows rapidly. A production deployment requires a 30-day archival and partitioning strategy.
+### 4.3 Fleet Shortage Feasibility Gating
+- **Courier Prioritization Suppression**: If zone fleet shortage exceeds 80%, courier priority actions are automatically suppressed by `PolicyEngine.check_fleet_availability_threshold` because priority dispatch without available couriers causes fleet churn without ETA improvement.
 
 ---
 
@@ -76,3 +74,4 @@ This document details the known technical boundaries, model assumptions, operati
 - **Remediated Economic Model**: The simulation KPI engine models platform gross losses avoided using a calibrated `contribution_margin_ratio = 0.20` (20% of GOV). Net economic benefit is calculated as:
   $$\text{Net Benefit} = (\text{Gross Losses Avoided} \times 0.20) - \text{Intervention Costs}$$
 - **Avoidance of 5x ROI Overstatement**: Treating full GOV as recovered platform cash would overstate financial returns by 500%. With 20% margin accounting, ResolveAI achieves an audited base ROI of 2.18x over intervention costs, preserving financial conservatism.
+- **Simulated Scope**: All financial figures are explicitly model-based estimates under stated assumptions, not measured financial ROI.

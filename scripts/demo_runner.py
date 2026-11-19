@@ -43,6 +43,13 @@ def run_demo():
 
     # 1. Health & Readiness Check
     log("STEP 1", "Checking Backend Health & Readiness...")
+    from backend.app.database.session import engine, SessionLocal
+    from backend.app.database.base import Base
+    from backend.app.services.simulation_service import SimulationService
+    Base.metadata.create_all(bind=engine)
+    with SessionLocal() as db:
+        SimulationService.ensure_synthetic_seed_entities(db)
+
     is_live_server = False
     try:
         r = client.get(f"{API_V1}/health/ready")

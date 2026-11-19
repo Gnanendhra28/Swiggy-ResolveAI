@@ -54,7 +54,14 @@ class TestConfigurationAndEnvironmentValidation:
 
     def test_environment_validation_accepts_valid_modes(self):
         for env in ["development", "testing", "staging", "production"]:
-            s = Settings(ENVIRONMENT=env)
+            if env in ("staging", "production"):
+                s = Settings(
+                    ENVIRONMENT=env,
+                    EXECUTION_MODE="SHADOW",
+                    AUTH_SECRET_KEY="prod-staging-secure-key-minimum-32-chars-long",
+                )
+            else:
+                s = Settings(ENVIRONMENT=env)
             assert s.ENVIRONMENT == env
 
     def test_environment_validation_rejects_invalid_mode(self):

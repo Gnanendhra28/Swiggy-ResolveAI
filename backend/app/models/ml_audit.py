@@ -51,3 +51,27 @@ class MLPredictionAudit(Base):
 
     def __repr__(self) -> str:
         return f"<MLPredictionAudit {self.id} for Order {self.order_id} (v{self.model_version})>"
+
+
+# -----------------------------------------------------------------------------
+# Workstream 3: Strict ORM-Level Immutability Enforcement for ML Audits
+# -----------------------------------------------------------------------------
+from sqlalchemy import event
+
+
+@event.listens_for(MLPredictionAudit, "before_update")
+def receive_ml_audit_before_update(mapper, connection, target):
+    """Enforces append-only immutability. Prevents modifying historical ML prediction audit records."""
+    raise PermissionError(
+        f"MLPredictionAudit records are strictly immutable. "
+        f"Attempted update on audit ID '{target.id}' (Order: '{target.order_id}') was rejected."
+    )
+
+
+@event.listens_for(MLPredictionAudit, "before_delete")
+def receive_ml_audit_before_delete(mapper, connection, target):
+    """Enforces append-only immutability. Prevents deleting historical ML prediction audit records."""
+    raise PermissionError(
+        f"MLPredictionAudit records are strictly immutable. "
+        f"Attempted deletion of audit ID '{target.id}' was rejected."
+    )

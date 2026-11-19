@@ -1,5 +1,5 @@
 from typing import Dict, Any, Optional
-from fastapi import APIRouter, Depends, UploadFile, File, Query
+from fastapi import APIRouter, Depends, UploadFile, File, Query, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
 
@@ -9,8 +9,22 @@ from backend.app.models.historical_order import HistoricalOrder
 from backend.app.services.ingestion.restaurant_loader import RestaurantDatasetLoader
 from backend.app.services.ingestion.order_history_loader import OrderHistoryDatasetLoader
 from backend.app.core.exceptions import ValidationError
+from backend.app.core.auth import TokenData, get_current_user
+from backend.app.core.config import settings
 
 router = APIRouter(prefix="/ingest", tags=["ingestion"])
+
+
+def require_admin_or_ops_lead(user: TokenData = Depends(get_current_user)) -> TokenData:
+    """Enforces ADMIN or OPS_LEAD authorization for administrative dataset ingestion."""
+    if settings.ENVIRONMENT in ("development", "testing") and user.sub == "dev_unauthenticated_operator":
+        return user
+    if user.role.upper().strip() not in ("ADMIN", "OPS_LEAD"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Authorization denied: role '{user.role}' lacks administrative ingestion privileges. Required: ['ADMIN', 'OPS_LEAD']",
+        )
+    return user
 
 
 @router.get("/status", response_model=Dict[str, Any])
@@ -46,6 +60,7 @@ async def ingest_restaurants(
     use_local_or_hf: bool = Query(True, description="Ingest from data/raw/restaurants/ or Hugging Face"),
     limit: Optional[int] = Query(None, description="Max rows to ingest (optional)"),
     db: Session = Depends(get_db),
+    current_user: TokenData = Depends(require_admin_or_ops_lead),
 ):
     """
     Ingest Swiggy restaurant dataset from Hugging Face or raw CSV.
@@ -75,6 +90,7 @@ async def ingest_restaurants(
 def ingest_order_history(
     limit: Optional[int] = Query(1000, description="Max historical rows to ingest (default: 1000 for safety)"),
     db: Session = Depends(get_db),
+    current_user: TokenData = Depends(require_admin_or_ops_lead),
 ):
     """
     Ingest historical order lifecycle telemetry from data/raw/orders/Rider-Info.csv.

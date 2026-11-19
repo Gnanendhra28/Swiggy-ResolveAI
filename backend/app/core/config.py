@@ -1,6 +1,6 @@
 import os
 from typing import List, Union, Optional
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -84,6 +84,20 @@ class Settings(BaseSettings):
         if norm == "LIVE":
             raise ValueError("LIVE execution mode is strictly disabled by safety governance policy.")
         return norm
+
+    @model_validator(mode="after")
+    def validate_cross_field_governance(self) -> "Settings":
+        if self.ENVIRONMENT == "production" and self.EXECUTION_MODE == "SIMULATION":
+            raise ValueError(
+                "SIMULATION execution mode is strictly prohibited in production environment."
+            )
+        if self.ENVIRONMENT in ("staging", "production"):
+            default_dev_key = "resolveai-insecure-dev-secret-key-change-in-production-12345678"
+            if self.AUTH_SECRET_KEY == default_dev_key or len(self.AUTH_SECRET_KEY) < 32:
+                raise ValueError(
+                    f"Production/staging requires a strong, non-default AUTH_SECRET_KEY with minimum 32 characters (got length {len(self.AUTH_SECRET_KEY)})."
+                )
+        return self
 
     model_config = SettingsConfigDict(
         env_file=".env",
