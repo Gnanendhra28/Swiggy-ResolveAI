@@ -45,6 +45,10 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     url = config.get_main_option("sqlalchemy.url") or settings.DATABASE_URL
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql+psycopg2://", 1)
+    elif url.startswith("postgresql://") and not url.startswith("postgresql+"):
+        url = url.replace("postgresql://", "postgresql+psycopg2://", 1)
     connect_args = {}
     if url.startswith("sqlite"):
         connect_args["check_same_thread"] = False
