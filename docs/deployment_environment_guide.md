@@ -168,7 +168,8 @@ python -m alembic -c backend/alembic.ini upgrade head && uvicorn backend.app.mai
 > **Neon Lakebase Postgres Integration Notes**:
 > - **Pooled vs. Direct Routing**: The web service uses the connection pooler URL (`-pooler`) for high-concurrency request handling. `backend/alembic/env.py` automatically routes schema migrations to the direct unpooled endpoint, eliminating PgBouncer startup parameter limitations.
 > - **Alembic Version Identifier Length**: `backend/alembic/env.py` enforces `VARCHAR(64)` on the `alembic_version` table, preventing PostgreSQL string truncation errors on descriptive migration revisions.
-> - **Public DNS Fallback**: `backend/app/database/session.py` embeds an automatic public DNS fallback resolver to ensure high connection availability across varying network environments.
+> - **Standard OS DNS Resolution**: Standard OS-level DNS resolution is preserved with pure system resolution and standard SQLAlchemy connection pooling (`pool_size=10`, `max_overflow=20`, `pool_recycle=1800`, `pool_pre_ping=True`).
+> - **Mandatory Password Rotation**: Before public release, rotate the `neondb_owner` role password in the Neon Console and update production environment variables.
 
 ---
 

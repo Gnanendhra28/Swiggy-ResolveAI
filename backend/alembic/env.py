@@ -69,6 +69,8 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     url = config.get_main_option("sqlalchemy.url") or settings.DATABASE_URL
+    target_schema = config.get_main_option("target_schema")
+
     if url.startswith("postgres://"):
         url = url.replace("postgres://", "postgresql+psycopg2://", 1)
     elif url.startswith("postgresql://") and not url.startswith("postgresql+"):
@@ -81,26 +83,42 @@ def run_migrations_online() -> None:
     connect_args = {}
     if url.startswith("sqlite"):
         connect_args["check_same_thread"] = False
+    elif target_schema and "postgresql" in url:
+        connect_args["options"] = f"-csearch_path={target_schema}"
 
     from sqlalchemy import create_engine
     connectable = create_engine(url, connect_args=connect_args, poolclass=pool.NullPool)
 
     with connectable.connect() as connection:
-        # Guarantee existing alembic_version column is VARCHAR(64) on PostgreSQL
-        try:
-            connection.execute(text("ALTER TABLE alembic_version ALTER COLUMN version_num TYPE VARCHAR(64)"))
+        if target_schema and connection.dialect.name == "postgresql":
+            connection.execute(text(f'SET search_path TO "{target_schema}"'))
             connection.commit()
-        except Exception:
-            connection.rollback()
+
+        # Explicit, safe, and idempotent version-table length verification on PostgreSQL
+        if connection.dialect.name == "postgresql":
+            from sqlalchemy import inspect as sqla_inspect
+            insp = sqla_inspect(connection)
+            table_names = insp.get_table_names(schema=target_schema)
+            if "alembic_version" in table_names:
+                for col in insp.get_columns("alembic_version", schema=target_schema):
+                    if col["name"] == "version_num":
+                        col_len = getattr(col["type"], "length", None)
+                        if col_len is not None and col_len < 64:
+                            schema_prefix = f'"{target_schema}".' if target_schema else ""
+                            connection.execute(text(f"ALTER TABLE {schema_prefix}alembic_version ALTER COLUMN version_num TYPE VARCHAR(64)"))
+                            connection.commit()
+                        break
 
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
+            version_table_schema=target_schema if target_schema else None,
             render_as_batch=True,
         )
 
         with context.begin_transaction():
             context.run_migrations()
+        connection.commit()
 
 
 if context.is_offline_mode():

@@ -77,6 +77,7 @@ def upgrade() -> None:
     op.create_index("ix_recovery_recommendations_action_type", "recovery_recommendations", ["action_type"], unique=False)
     op.create_index("ix_recovery_recommendations_approval_status", "recovery_recommendations", ["approval_status"], unique=False)
     op.create_index("ix_recovery_recommendations_execution_status", "recovery_recommendations", ["execution_status"], unique=False)
+    op.create_index("ix_recovery_recommendations_created_at", "recovery_recommendations", ["created_at"], unique=False)
 
     # 3. Create recovery_execution_audits table
     op.create_table(

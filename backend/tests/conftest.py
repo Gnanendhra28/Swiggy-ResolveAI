@@ -29,15 +29,7 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_database():
     Base.metadata.create_all(bind=engine_test)
-    try:
-        Base.metadata.create_all(bind=engine)
-    except Exception:
-        pass
     yield
-    try:
-        Base.metadata.drop_all(bind=engine)
-    except Exception:
-        pass
     Base.metadata.drop_all(bind=engine_test)
 
 

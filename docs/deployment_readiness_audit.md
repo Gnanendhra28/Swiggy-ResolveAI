@@ -12,7 +12,7 @@
 This DevOps audit provides a complete evaluation of the Swiggy ResolveAI repository for cloud deployment. The inspection verified that:
 1. **Frontend**: The Next.js 16 frontend is fully decoupled, compiles cleanly with Turbopack, and is **100% ready for Vercel deployment** with zero architectural changes.
 2. **Backend**: The FastAPI backend contains heavy machine learning dependencies (`scipy`, `pandas`, `lightgbm`, `shap`, `scikit-learn`, `langgraph`, model binaries) exceeding Vercel's 250 MB serverless uncompressed bundle size limit. The backend is configured for deployment on a container runtime (Render, Railway, AWS App Runner) using the repository's production-ready [`backend/Dockerfile`](file:///c:/Users/ASUS/Desktop/Swiggy%20ResolveAI/backend/Dockerfile).
-3. **Database**: Lakebase Postgres on Neon (v18.7) is fully verified with 100% schema equivalence across all 11 tables, columns, indexes, and constraints. Alembic migration tracking stamped to `005_phase_5_experiments_and_kpis`. Fresh migrations from 001 to head verified in isolated schema after patching Alembic version column to `VARCHAR(64)`.
+3. **Database**: Lakebase Postgres on Neon (v18.7) is fully verified with 100% catalog-to-model parity across all 11 tables, 149 columns, 47 indexes, 11 primary keys, 10 foreign keys, and 2 unique constraints. Alembic migration tracking stamped to `005_phase_5_experiments_and_kpis`. Fresh migrations from 001 to head verified in disposable ephemeral schemas (`test_ephemeral_mig_<uuid>`). Standard OS DNS resolution is fully restored without monkey-patching.
 4. **Redis**: An exhaustive code inspection confirms **zero Redis dependencies**. Redis is not required.
 5. **AI Integration**: Gemini model configuration has been updated to the active Flash candidate `gemini-3.5-flash` (replacing the deprecated `gemini-1.5-flash`), compatible with `langchain-google-genai` and automatically routed to current flash generation. Deterministic rule-based fallback is fully preserved when `GEMINI_API_KEY` is omitted.
 6. **Safety Governance**: Production execution requires `SHADOW` mode. `SIMULATION` is prohibited in production, and `LIVE` execution is permanently blocked across all environments.
@@ -52,7 +52,8 @@ This DevOps audit provides a complete evaluation of the Swiggy ResolveAI reposit
 - **Driver**: `psycopg2-binary>=2.9.9` is present in `backend/requirements.txt`.
 - **SQLAlchemy URL Schemes**: Supported schemes are `postgresql+psycopg2://` and `postgresql://`.
 - **Connection Pooling**: `DB_POOL_SIZE` (10), `DB_MAX_OVERFLOW` (20), `DB_POOL_TIMEOUT` (30s), and `DB_POOL_RECYCLE` (1800s) are configured on PostgreSQL connections with `pool_pre_ping=True`.
-- **Alembic**: 5 sequential migrations verified in `backend/alembic/versions/`. Migrations read `settings.DATABASE_URL` directly.
+- **Alembic**: 5 sequential migrations verified in `backend/alembic/versions/`. Migrations read `settings.DATABASE_URL` directly with direct unpooled routing for DDL.
+- **Networking**: Standard OS DNS resolution restored with zero monkey-patching.
 
 ### 2.5 Runtime Profiling & Container Sizing
 - **Model Binaries Size**: Exactly 1.99 MB (2,084,098 B) across 8 files in `data/artifacts/models/phase_2_5/`.
@@ -95,11 +96,11 @@ All tests, compilation checks, and database verifications have been executed and
 
 | Verification Target | Command | Scope / Duration | Exit Code | Result |
 | :--- | :--- | :---: | :---: | :--- |
-| **Backend Test Suite** | `python -m pytest backend/tests/ -q` | Local Test Isolation (31.88s) | `0` | **207 passed**, 0 failed |
-| **Agent Unit Tests** | `python -m pytest backend/tests/test_phase_3_agents.py` | Local Test Isolation (1.34s) | `0` | **15 passed**, 0 failed |
-| **Frontend Production Build** | `npm run build` | Turbopack Production Build (558ms) | `0` | **Clean build** (9/9 routes static/hybrid) |
-| **Neon Schema Integrity Audit** | `python scripts/audit_neon_schema.py` | Live Neon Instance (Singapore) | `0` | **100% Equivalence** (0 discrepancies) |
-| **Fresh PostgreSQL Migration** | `python scripts/test_fresh_neon_migration.py` | Live Neon Instance (Clean Schema) | `0` | **001 $\to$ 005 Head Migration Passed** |
+| **Backend Test Suite** | `python -m pytest backend/tests/ -q` | Local Test Isolation (36.95s) | `0` | **212 passed**, 0 failed |
+| **Database & Alembic Tests** | `python -m pytest backend/tests/test_database.py backend/tests/test_alembic.py -q` | Local Test Isolation (1.81s) | `0` | **8 passed**, 0 failed |
+| **Frontend Production Build** | `npm run build` | Turbopack Production Build (560ms) | `0` | **Clean build** (9/9 routes static/hybrid) |
+| **Comprehensive Schema Audit** | `python scripts/audit_neon_schema.py` | Live Neon PostgreSQL Catalog | `0` | **100% Equivalence** (0 discrepancies) |
+| **Safe Fresh Ephemeral Migration** | `python scripts/test_fresh_neon_migration.py` | Live Neon (Disposable Schema) | `0` | **001 $\to$ 005 Head Migration Passed** |
 | **Neon Reliability & Probes** | `python scripts/test_neon_reliability.py` | Live Neon Instance | `0` | **Rollback, Commit, & Health Probes OK** |
 | **End-to-End Demo Script** | `python scripts/demo_runner.py` | Live Backend + Neon Database | `0` | **8/8 operational steps passed** (1.80s) |
 
